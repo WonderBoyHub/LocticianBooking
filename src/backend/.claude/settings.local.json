@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m pytest tests/ -v)",
+      "Bash(python3:*)",
+      "WebFetch(domain:neon.com)",
+      "Bash(nc:*)",
+      "Read(//Users/kevinsamuel/Documents/jsreact/jli/src/db/**)",
+      "Bash(psql:*)",
+      "Bash(python:*)",
+      "Bash(source:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

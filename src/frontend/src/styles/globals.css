@@ -1,0 +1,408 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for Brand Colors */
+:root {
+  --color-brand-primary: #8B6B47;
+  --color-brand-secondary: #D2B48C;
+  --color-brand-accent: #F5F5DC;
+  --color-brand-dark: #6B4E32;
+  --color-brand-light: #FAF7F0;
+
+  --color-brown-50: #FAF7F0;
+  --color-brown-100: #F5F5DC;
+  --color-brown-200: #E8D5B7;
+  --color-brown-300: #D2B48C;
+  --color-brown-400: #C19A6B;
+  --color-brown-500: #8B6B47;
+  --color-brown-600: #6B4E32;
+  --color-brown-700: #5D4037;
+  --color-brown-800: #4E342E;
+  --color-brown-900: #3E2723;
+
+  --shadow-soft: 0 2px 15px -3px rgba(139, 107, 71, 0.1), 0 10px 20px -2px rgba(139, 107, 71, 0.04);
+  --shadow-brand: 0 4px 20px -2px rgba(139, 107, 71, 0.15);
+
+  --border-radius-xl: 1rem;
+  --border-radius-2xl: 1.5rem;
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-brand-light text-brand-dark font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-primary ring-offset-2 ring-offset-brand-light;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-brand-dark;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold leading-snug;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl font-medium leading-snug;
+  }
+
+  p {
+    @apply text-base md:text-lg leading-relaxed;
+  }
+
+  /* Links */
+  a {
+    @apply text-brand-primary hover:text-brand-dark transition-colors duration-200;
+  }
+}
+
+/* Component Styles */
+@layer components {
+  /* Button Variants */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-primary text-white hover:bg-brand-dark focus:ring-brand-primary shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply btn bg-brand-secondary text-brand-dark hover:bg-brand-primary hover:text-white focus:ring-brand-secondary;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white focus:ring-brand-primary;
+  }
+
+  .btn-ghost {
+    @apply btn text-brand-primary hover:bg-brand-accent focus:ring-brand-primary;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-white rounded-xl border border-brown-200 shadow-soft;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-brand transition-shadow duration-300;
+  }
+
+  /* Form Styles */
+  .form-input {
+    @apply w-full px-3 py-2 border border-brown-300 rounded-lg bg-white text-brand-dark placeholder-brown-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-colors duration-200;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-brand-dark mb-1;
+  }
+
+  .form-error {
+    @apply text-red-600 text-sm mt-1;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .status-pending {
+    @apply status-badge bg-orange-100 text-orange-800;
+  }
+
+  .status-confirmed {
+    @apply status-badge bg-green-100 text-green-800;
+  }
+
+  .status-progress {
+    @apply status-badge bg-blue-100 text-blue-800;
+  }
+
+  .status-completed {
+    @apply status-badge bg-gray-100 text-gray-800;
+  }
+
+  .status-cancelled {
+    @apply status-badge bg-red-100 text-red-800;
+  }
+
+  /* Layout Utilities */
+  .container-custom {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-12 lg:py-16;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-primary to-brand-dark bg-clip-text text-transparent;
+  }
+}
+
+/* Utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-secondary) var(--color-brand-light);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--color-brand-light);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-brand-secondary);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand-primary);
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  /* Touch-friendly sizing */
+  .btn {
+    @apply min-h-[44px] px-4 py-3;
+  }
+
+  /* Mobile typography adjustments */
+  h1 {
+    @apply text-3xl leading-tight;
+  }
+
+  h2 {
+    @apply text-2xl leading-tight;
+  }
+
+  /* Mobile form adjustments */
+  .form-input {
+    @apply min-h-[44px] text-base;
+  }
+
+  /* Mobile calendar adjustments */
+  .calendar-day {
+    @apply min-h-[40px] min-w-[40px];
+  }
+
+  /* Mobile modal adjustments */
+  .modal-mobile {
+    @apply mx-4 my-8;
+  }
+
+  /* Reduce padding on mobile */
+  .section-padding {
+    @apply py-8;
+  }
+
+  .container-custom {
+    @apply px-4;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .container-custom {
+    @apply px-6;
+  }
+}
+
+/* Large screen styles */
+@media (min-width: 1024px) {
+  .container-custom {
+    @apply px-8;
+  }
+}
+
+/* High DPI / Retina display optimizations */
+@media (min-resolution: 2dppx) {
+  .card {
+    @apply shadow-sm;
+  }
+
+  .card-hover:hover {
+    @apply shadow-lg;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    @apply text-black bg-white;
+  }
+
+  .card {
+    @apply shadow-none border border-gray-300;
+  }
+
+  .btn {
+    @apply border border-gray-400 text-black bg-white;
+  }
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if needed */
+  :root {
+    /* Dark mode color overrides would go here */
+  }
+}
+
+/* Focus improvements for keyboard navigation */
+.focus-visible {
+  @apply outline-none ring-2 ring-brand-primary ring-offset-2;
+}
+
+/* Loading state styles */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f3f3f3 25%,
+    #e8e8e8 50%,
+    #f3f3f3 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Custom line clamp utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

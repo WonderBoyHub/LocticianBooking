@@ -1,0 +1,299 @@
+{
+  "common": {
+    "loading": "Indlæser...",
+    "error": "Der opstod en fejl",
+    "save": "Gem",
+    "cancel": "Annuller",
+    "delete": "Slet",
+    "edit": "Rediger",
+    "add": "Tilføj",
+    "create": "Opret",
+    "update": "Opdater",
+    "confirm": "Bekræft",
+    "yes": "Ja",
+    "no": "Nej",
+    "back": "Tilbage",
+    "next": "Næste",
+    "previous": "Forrige",
+    "submit": "Send",
+    "close": "Luk",
+    "open": "Åbn",
+    "view": "Se",
+    "search": "Søg",
+    "filter": "Filter",
+    "clear": "Ryd",
+    "select": "Vælg",
+    "all": "Alle",
+    "none": "Ingen",
+    "optional": "Valgfri",
+    "required": "Påkrævet"
+  },
+  "navigation": {
+    "home": "Hjem",
+    "services": "Services",
+    "booking": "Book tid",
+    "about": "Om os",
+    "contact": "Kontakt",
+    "login": "Log ind",
+    "logout": "Log ud",
+    "register": "Opret konto",
+    "dashboard": "Dashboard",
+    "calendar": "Kalender",
+    "customers": "Kunder",
+    "analytics": "Analyser",
+    "settings": "Indstillinger",
+    "profile": "Profil"
+  },
+  "auth": {
+    "login": {
+      "title": "Log ind",
+      "subtitle": "Velkommen tilbage",
+      "email": "E-mail",
+      "password": "Adgangskode",
+      "rememberMe": "Husk mig",
+      "forgotPassword": "Glemt adgangskode?",
+      "noAccount": "Har du ikke en konto?",
+      "signUp": "Opret konto her"
+    },
+    "register": {
+      "title": "Opret konto",
+      "subtitle": "Kom i gang i dag",
+      "name": "Fulde navn",
+      "email": "E-mail adresse",
+      "phone": "Telefonnummer",
+      "password": "Adgangskode",
+      "confirmPassword": "Bekræft adgangskode",
+      "agreeTerms": "Jeg accepterer vilkår og betingelser",
+      "hasAccount": "Har du allerede en konto?",
+      "signIn": "Log ind her"
+    },
+    "errors": {
+      "invalidCredentials": "Ugyldig e-mail eller adgangskode",
+      "emailExists": "E-mail er allerede i brug",
+      "weakPassword": "Adgangskoden er for svag",
+      "passwordMismatch": "Adgangskoder matcher ikke",
+      "termsRequired": "Du skal acceptere vilkår og betingelser"
+    }
+  },
+  "booking": {
+    "title": "Book din tid",
+    "steps": {
+      "service": "Vælg service",
+      "datetime": "Vælg dato og tid",
+      "details": "Dine oplysninger",
+      "confirmation": "Bekræftelse"
+    },
+    "service": {
+      "title": "Vælg din service",
+      "duration": "Varighed",
+      "price": "Pris",
+      "category": "Kategori",
+      "selectService": "Vælg denne service"
+    },
+    "datetime": {
+      "title": "Vælg dato og tid",
+      "selectDate": "Vælg en dato",
+      "selectTime": "Vælg et tidspunkt",
+      "noSlotsAvailable": "Ingen ledige tider på denne dato",
+      "timeSlots": "Ledige tider"
+    },
+    "details": {
+      "title": "Dine oplysninger",
+      "name": "Fulde navn",
+      "email": "E-mail adresse",
+      "phone": "Telefonnummer",
+      "notes": "Ekstra noter (valgfrit)",
+      "notesPlaceholder": "Har du særlige ønsker eller bemærkninger?"
+    },
+    "confirmation": {
+      "title": "Bekræft din booking",
+      "summary": "Booking oversigt",
+      "service": "Service",
+      "date": "Dato",
+      "time": "Tid",
+      "duration": "Varighed",
+      "price": "Pris",
+      "customer": "Kunde",
+      "confirmBooking": "Bekræft booking",
+      "success": {
+        "title": "Booking bekræftet!",
+        "message": "Din tid er nu booket. Du vil modtage en bekræftelse på e-mail.",
+        "reference": "Booking reference"
+      }
+    }
+  },
+  "services": {
+    "title": "Vores services",
+    "viewAll": "Se alle services",
+    "from": "Fra",
+    "bookNow": "Book nu",
+    "learnMore": "Læs mere",
+    "categories": {
+      "maintenance": "Vedligeholdelse",
+      "styling": "Styling",
+      "treatment": "Behandling",
+      "consultation": "Konsultation"
+    }
+  },
+  "calendar": {
+    "views": {
+      "month": "Måned",
+      "week": "Uge",
+      "day": "Dag",
+      "agenda": "Agenda"
+    },
+    "navigation": {
+      "today": "I dag",
+      "previous": "Forrige",
+      "next": "Næste"
+    },
+    "appointment": {
+      "status": {
+        "pending": "Afventer",
+        "confirmed": "Bekræftet",
+        "in_progress": "I gang",
+        "completed": "Færdig",
+        "cancelled": "Aflyst",
+        "no_show": "Ikke mødt op"
+      },
+      "details": "Detaljer",
+      "customer": "Kunde",
+      "service": "Service",
+      "notes": "Noter",
+      "reschedule": "Ombooking",
+      "cancel": "Aflys"
+    }
+  },
+  "dashboard": {
+    "welcome": "Velkommen tilbage",
+    "overview": {
+      "title": "Oversigt",
+      "todayAppointments": "Dagens aftaler",
+      "weekRevenue": "Ugens omsætning",
+      "monthlyBookings": "Månedlige bookinger",
+      "customerSatisfaction": "Kundetilfredshed"
+    },
+    "recentBookings": {
+      "title": "Seneste bookinger",
+      "viewAll": "Se alle",
+      "noBookings": "Ingen bookinger endnu"
+    },
+    "quickActions": {
+      "title": "Hurtige handlinger",
+      "newBooking": "Ny booking",
+      "viewCalendar": "Se kalender",
+      "addService": "Tilføj service",
+      "customerList": "Kundeliste"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "personalInfo": {
+      "title": "Personlige oplysninger",
+      "name": "Navn",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "updateSuccess": "Profil opdateret"
+    },
+    "preferences": {
+      "title": "Præferencer",
+      "language": "Sprog",
+      "notifications": "Notifikationer",
+      "timezone": "Tidszone"
+    },
+    "notifications": {
+      "email": "E-mail notifikationer",
+      "sms": "SMS notifikationer",
+      "push": "Push notifikationer"
+    },
+    "changePassword": {
+      "title": "Skift adgangskode",
+      "currentPassword": "Nuværende adgangskode",
+      "newPassword": "Ny adgangskode",
+      "confirmNewPassword": "Bekræft ny adgangskode",
+      "updatePassword": "Opdater adgangskode"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": {
+      "title": "Brugere",
+      "addUser": "Tilføj bruger",
+      "editUser": "Rediger bruger",
+      "role": "Rolle",
+      "status": "Status",
+      "lastLogin": "Sidste login"
+    },
+    "services": {
+      "title": "Services",
+      "addService": "Tilføj service",
+      "editService": "Rediger service",
+      "name": "Navn",
+      "category": "Kategori",
+      "duration": "Varighed",
+      "price": "Pris",
+      "active": "Aktiv"
+    },
+    "analytics": {
+      "title": "Analyser",
+      "revenue": "Omsætning",
+      "bookings": "Bookinger",
+      "customers": "Kunder",
+      "growth": "Vækst",
+      "thisMonth": "Denne måned",
+      "lastMonth": "Sidste måned",
+      "yearToDate": "År til dato"
+    }
+  },
+  "errors": {
+    "generic": "Der opstod en fejl. Prøv igen senere.",
+    "network": "Netværksfejl. Tjek din internetforbindelse.",
+    "notFound": "Siden blev ikke fundet.",
+    "unauthorized": "Du har ikke tilladelse til at se denne side.",
+    "validation": {
+      "required": "Dette felt er påkrævet",
+      "email": "Indtast en gyldig e-mail adresse",
+      "phone": "Indtast et gyldigt telefonnummer",
+      "minLength": "Minimum {{min}} tegn",
+      "maxLength": "Maksimum {{max}} tegn"
+    }
+  },
+  "success": {
+    "saved": "Gemt med succes",
+    "created": "Oprettet med succes",
+    "updated": "Opdateret med succes",
+    "deleted": "Slettet med succes",
+    "bookingConfirmed": "Booking bekræftet",
+    "appointmentCancelled": "Aftale aflyst"
+  },
+  "time": {
+    "minutes": "minutter",
+    "hours": "timer",
+    "days": "dage",
+    "weeks": "uger",
+    "months": "måneder",
+    "today": "I dag",
+    "tomorrow": "I morgen",
+    "yesterday": "I går"
+  },
+  "contact": {
+    "title": "Kontakt os",
+    "address": "Adresse",
+    "phone": "Telefon",
+    "email": "E-mail",
+    "hours": "Åbningstider",
+    "getInTouch": "Kontakt os",
+    "sendMessage": "Send besked",
+    "yourName": "Dit navn",
+    "yourEmail": "Din e-mail",
+    "subject": "Emne",
+    "message": "Besked",
+    "messageSent": "Besked sendt"
+  },
+  "footer": {
+    "rights": "Alle rettigheder forbeholdes",
+    "privacy": "Privatlivspolitik",
+    "terms": "Vilkår og betingelser",
+    "contact": "Kontakt"
+  }
+}

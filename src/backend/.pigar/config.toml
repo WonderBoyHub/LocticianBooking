@@ -1,0 +1,17 @@
+[ignore]
+modules = ["app"]
+paths = ["**/node_modules/**", "**/.venv/**", "**/venv/**", "**/frontend/**", "**/dist/**", "**/build/**"]
+
+[mapping]
+# ambiguous → PyPI package
+jose = "python-jose"
+pydantic_settings = "pydantic-settings"
+
+# explicit self-maps so pigar never asks again
+fastapi = "fastapi"
+starlette = "starlette"
+uvicorn = "uvicorn"
+structlog = "structlog"
+slowapi = "slowapi"
+passlib = "passlib"
+pydantic = "pydantic"

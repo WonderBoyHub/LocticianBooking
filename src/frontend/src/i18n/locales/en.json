@@ -1,0 +1,299 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "open": "Open",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "select": "Select",
+    "all": "All",
+    "none": "None",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "navigation": {
+    "home": "Home",
+    "services": "Services",
+    "booking": "Book Appointment",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "customers": "Customers",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Welcome back",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up here"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Get started today",
+      "name": "Full name",
+      "email": "Email address",
+      "phone": "Phone number",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "agreeTerms": "I agree to the terms and conditions",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in here"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailExists": "Email is already in use",
+      "weakPassword": "Password is too weak",
+      "passwordMismatch": "Passwords do not match",
+      "termsRequired": "You must accept the terms and conditions"
+    }
+  },
+  "booking": {
+    "title": "Book Your Appointment",
+    "steps": {
+      "service": "Select Service",
+      "datetime": "Choose Date & Time",
+      "details": "Your Details",
+      "confirmation": "Confirmation"
+    },
+    "service": {
+      "title": "Select Your Service",
+      "duration": "Duration",
+      "price": "Price",
+      "category": "Category",
+      "selectService": "Select This Service"
+    },
+    "datetime": {
+      "title": "Choose Date & Time",
+      "selectDate": "Select a date",
+      "selectTime": "Select a time slot",
+      "noSlotsAvailable": "No time slots available on this date",
+      "timeSlots": "Available Times"
+    },
+    "details": {
+      "title": "Your Details",
+      "name": "Full name",
+      "email": "Email address",
+      "phone": "Phone number",
+      "notes": "Additional notes (optional)",
+      "notesPlaceholder": "Any special requests or notes?"
+    },
+    "confirmation": {
+      "title": "Confirm Your Booking",
+      "summary": "Booking Summary",
+      "service": "Service",
+      "date": "Date",
+      "time": "Time",
+      "duration": "Duration",
+      "price": "Price",
+      "customer": "Customer",
+      "confirmBooking": "Confirm Booking",
+      "success": {
+        "title": "Booking Confirmed!",
+        "message": "Your appointment has been booked. You will receive a confirmation email.",
+        "reference": "Booking reference"
+      }
+    }
+  },
+  "services": {
+    "title": "Our Services",
+    "viewAll": "View all services",
+    "from": "From",
+    "bookNow": "Book Now",
+    "learnMore": "Learn More",
+    "categories": {
+      "maintenance": "Maintenance",
+      "styling": "Styling",
+      "treatment": "Treatment",
+      "consultation": "Consultation"
+    }
+  },
+  "calendar": {
+    "views": {
+      "month": "Month",
+      "week": "Week",
+      "day": "Day",
+      "agenda": "Agenda"
+    },
+    "navigation": {
+      "today": "Today",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "appointment": {
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "no_show": "No Show"
+      },
+      "details": "Details",
+      "customer": "Customer",
+      "service": "Service",
+      "notes": "Notes",
+      "reschedule": "Reschedule",
+      "cancel": "Cancel"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "overview": {
+      "title": "Overview",
+      "todayAppointments": "Today's Appointments",
+      "weekRevenue": "Week's Revenue",
+      "monthlyBookings": "Monthly Bookings",
+      "customerSatisfaction": "Customer Satisfaction"
+    },
+    "recentBookings": {
+      "title": "Recent Bookings",
+      "viewAll": "View All",
+      "noBookings": "No bookings yet"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newBooking": "New Booking",
+      "viewCalendar": "View Calendar",
+      "addService": "Add Service",
+      "customerList": "Customer List"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": {
+      "title": "Personal Information",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "updateSuccess": "Profile updated"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "notifications": "Notifications",
+      "timezone": "Timezone"
+    },
+    "notifications": {
+      "email": "Email notifications",
+      "sms": "SMS notifications",
+      "push": "Push notifications"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "updatePassword": "Update Password"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": {
+      "title": "Users",
+      "addUser": "Add User",
+      "editUser": "Edit User",
+      "role": "Role",
+      "status": "Status",
+      "lastLogin": "Last Login"
+    },
+    "services": {
+      "title": "Services",
+      "addService": "Add Service",
+      "editService": "Edit Service",
+      "name": "Name",
+      "category": "Category",
+      "duration": "Duration",
+      "price": "Price",
+      "active": "Active"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "revenue": "Revenue",
+      "bookings": "Bookings",
+      "customers": "Customers",
+      "growth": "Growth",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "yearToDate": "Year to Date"
+    }
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again later.",
+    "network": "Network error. Please check your internet connection.",
+    "notFound": "Page not found.",
+    "unauthorized": "You are not authorized to view this page.",
+    "validation": {
+      "required": "This field is required",
+      "email": "Please enter a valid email address",
+      "phone": "Please enter a valid phone number",
+      "minLength": "Minimum {{min}} characters",
+      "maxLength": "Maximum {{max}} characters"
+    }
+  },
+  "success": {
+    "saved": "Successfully saved",
+    "created": "Successfully created",
+    "updated": "Successfully updated",
+    "deleted": "Successfully deleted",
+    "bookingConfirmed": "Booking confirmed",
+    "appointmentCancelled": "Appointment cancelled"
+  },
+  "time": {
+    "minutes": "minutes",
+    "hours": "hours",
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "hours": "Opening Hours",
+    "getInTouch": "Get in Touch",
+    "sendMessage": "Send Message",
+    "yourName": "Your name",
+    "yourEmail": "Your email",
+    "subject": "Subject",
+    "message": "Message",
+    "messageSent": "Message sent"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms and Conditions",
+    "contact": "Contact"
+  }
+}

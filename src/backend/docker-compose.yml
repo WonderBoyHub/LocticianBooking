@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://loctician:password@db:5432/loctician_booking
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - loctician-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: loctician_booking
+      POSTGRES_USER: loctician
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ../../sample_data.sql:/docker-entrypoint-initdb.d/02-sample_data.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - loctician-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - loctician-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - loctician-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  loctician-network:
+    driver: bridge
