@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -15,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.mixins import BaseModel
 
 
@@ -79,7 +80,8 @@ class Product(Base, BaseModel):
     size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     color: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     weight_grams: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    ingredients: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
+    _IngredientType = ARRAY(Text) if IS_POSTGRES else JSON
+    ingredients: Mapped[Optional[List[str]]] = mapped_column(_IngredientType, nullable=True)
 
     # Visibility
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

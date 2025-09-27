@@ -4,11 +4,11 @@ Audit logging model.
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.mixins import UUIDMixin
 
 
@@ -17,12 +17,16 @@ class AuditLog(Base, UUIDMixin):
 
     __tablename__ = "audit_log"
 
+    _JSONType = JSONB if IS_POSTGRES else JSON
+    _ListType = ARRAY(Text) if IS_POSTGRES else JSON
+    _InetType = INET if IS_POSTGRES else String(45)
+
     table_name: Mapped[str] = mapped_column(String(100), nullable=False)
     record_id: Mapped[str] = mapped_column(UUID(as_uuid=False), nullable=False)
     action: Mapped[str] = mapped_column(String(20), nullable=False)  # INSERT, UPDATE, DELETE
-    old_values: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    new_values: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    changed_fields: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
+    old_values: Mapped[Optional[Dict[str, Any]]] = mapped_column(_JSONType, nullable=True)
+    new_values: Mapped[Optional[Dict[str, Any]]] = mapped_column(_JSONType, nullable=True)
+    changed_fields: Mapped[Optional[List[str]]] = mapped_column(_ListType, nullable=True)
 
     # User context
     user_id: Mapped[Optional[str]] = mapped_column(
@@ -31,7 +35,7 @@ class AuditLog(Base, UUIDMixin):
         nullable=True,
     )
     session_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    ip_address: Mapped[Optional[str]] = mapped_column(INET, nullable=True)
+    ip_address: Mapped[Optional[str]] = mapped_column(_InetType, nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Timing

@@ -4,11 +4,11 @@ CMS page model.
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.enums import PageType
 from app.models.mixins import BaseModel
 
@@ -27,7 +27,8 @@ class CMSPage(Base, BaseModel):
     # SEO
     meta_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     meta_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    meta_keywords: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
+    _KeywordsType = ARRAY(Text) if IS_POSTGRES else JSON
+    meta_keywords: Mapped[Optional[List[str]]] = mapped_column(_KeywordsType, nullable=True)
 
     # Visibility
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

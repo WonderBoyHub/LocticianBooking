@@ -14,9 +14,10 @@ from sqlalchemy import (
     Integer,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.enums import UserRole, UserStatus
 from app.models.mixins import FullAuditModel
 
@@ -146,15 +147,24 @@ class UserProfile(Base, FullAuditModel):
     website_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Loctician-specific fields
-    specializations: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
+    if IS_POSTGRES:
+        _ListType = ARRAY(Text)
+        _JSONType = JSONB
+    else:
+        # SQLite and other non-PostgreSQL backends do not support ARRAY/JSONB.
+        # We fall back to generic JSON columns to maintain compatibility.
+        _ListType = JSON
+        _JSONType = JSON
+
+    specializations: Mapped[Optional[List[str]]] = mapped_column(_ListType, nullable=True)
     years_experience: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    certifications: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
-    business_hours: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    certifications: Mapped[Optional[List[str]]] = mapped_column(_ListType, nullable=True)
+    business_hours: Mapped[Optional[dict]] = mapped_column(_JSONType, nullable=True)
 
     # Customer-specific fields
     hair_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     hair_length: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    allergies: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text), nullable=True)
+    allergies: Mapped[Optional[List[str]]] = mapped_column(_ListType, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships

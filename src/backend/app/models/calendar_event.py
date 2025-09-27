@@ -3,11 +3,11 @@ Calendar event model.
 """
 from typing import Optional
 
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import TSTZRANGE, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.enums import CalendarEventType
 from app.models.mixins import BaseModel
 
@@ -26,8 +26,9 @@ class CalendarEvent(Base, BaseModel):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     event_type: Mapped[CalendarEventType] = mapped_column(nullable=False)
 
-    # Time range using PostgreSQL's tstzrange type
-    time_range: Mapped[str] = mapped_column(TSTZRANGE, nullable=False)
+    # Time range using PostgreSQL's tstzrange type with JSON fallback for SQLite
+    _TimeRangeType = TSTZRANGE if IS_POSTGRES else JSON
+    time_range: Mapped[str] = mapped_column(_TimeRangeType, nullable=False)
 
     # Recurrence (if applicable)
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

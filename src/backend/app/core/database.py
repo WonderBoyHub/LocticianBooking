@@ -6,13 +6,14 @@ from typing import AsyncGenerator
 from urllib.parse import urlparse
 
 import structlog
-from sqlalchemy import event, pool
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -25,37 +26,56 @@ class Base(DeclarativeBase):
     pass
 
 
-# Configure TLS when talking to remote hosts such as Neon
+# Configure TLS when talking to remote hosts such as Neon and provide
+# sensible defaults for other database backends (e.g. SQLite used in tests).
 _db_url = urlparse(settings.DATABASE_URL)
-_connect_args = {
-    "server_settings": {
-        "jit": "off",
-        "log_statement": "none",
-        "application_name": f"jli_loctician_{settings.ENVIRONMENT}",
-    },
-    "command_timeout": 60,
+_is_postgres = _db_url.scheme.startswith("postgres")
+IS_POSTGRES = _is_postgres
+
+engine_kwargs = {
+    "echo": settings.DEBUG,
+    "future": True,  # Use SQLAlchemy 2.0 style
 }
 
-if _db_url.hostname and _db_url.hostname not in {"localhost", "127.0.0.1"}:
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = True
-    ssl_context.verify_mode = ssl.CERT_REQUIRED
-    _connect_args["ssl"] = ssl_context
+if _is_postgres:
+    connect_args = {
+        "server_settings": {
+            "jit": "off",
+            "log_statement": "none",
+            "application_name": f"jli_loctician_{settings.ENVIRONMENT}",
+        },
+        "command_timeout": 60,
+    }
 
-# Create async engine with optimized connection pooling
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    # Optimized pool settings for production
-    pool_size=10,  # Reduced from 20 for better resource management
-    max_overflow=20,  # Allow overflow connections
-    pool_pre_ping=True,  # Test connections before use
-    pool_recycle=3600,  # Recycle connections every hour
-    pool_timeout=30,  # Timeout for getting connection from pool
-    connect_args=_connect_args,
-    # Performance optimizations
-    future=True,  # Use SQLAlchemy 2.0 style
-)
+    if _db_url.hostname and _db_url.hostname not in {"localhost", "127.0.0.1"}:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = True
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        connect_args["ssl"] = ssl_context
+
+    engine_kwargs.update(
+        {
+            "pool_size": 10,  # Reduced from 20 for better resource management
+            "max_overflow": 20,  # Allow overflow connections
+            "pool_pre_ping": True,  # Test connections before use
+            "pool_recycle": 3600,  # Recycle connections every hour
+            "pool_timeout": 30,  # Timeout for getting connection from pool
+            "connect_args": connect_args,
+        }
+    )
+else:
+    # SQLite (and other non-Postgres backends) do not understand PostgreSQL
+    # specific connection arguments or pooling options.  We disable pooling so
+    # that in-memory databases work reliably during tests and local development.
+    engine_kwargs.update(
+        {
+            "poolclass": NullPool,
+            "connect_args": {},
+        }
+    )
+
+# Create async engine with optimized connection pooling when available
+engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(

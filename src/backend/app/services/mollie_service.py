@@ -59,9 +59,20 @@ class MollieService:
         """Initialize Mollie service with API credentials."""
         self.api_key = api_key or getattr(settings, 'MOLLIE_API_KEY', None)
         self.webhook_secret = webhook_secret or getattr(settings, 'MOLLIE_WEBHOOK_SECRET', None)
+        self.disabled = False
 
         if not self.api_key:
-            raise ValueError("Mollie API key is required")
+            # During local development and automated tests we often do not
+            # configure Mollie credentials.  Instead of crashing the whole
+            # application we mark the service as disabled and fail lazily when
+            # one of the payment operations is invoked.
+            logger.warning(
+                "Mollie API key is not configured; payment features are disabled."
+            )
+            self.disabled = True
+            self.headers = {}
+            self.test_mode = True
+            return
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -78,6 +89,13 @@ class MollieService:
             has_webhook_secret=bool(self.webhook_secret)
         )
 
+    def _ensure_configured(self) -> None:
+        """Ensure the Mollie service has been configured."""
+        if self.disabled:
+            raise MollieServiceError(
+                "Mollie service is not configured. Set MOLLIE_API_KEY to enable payments."
+            )
+
     async def _make_request(
         self,
         method: str,
@@ -86,6 +104,7 @@ class MollieService:
         params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Make authenticated request to Mollie API."""
+        self._ensure_configured()
         url = f"{MOLLIE_API_BASE_URL}/{endpoint.lstrip('/')}"
 
         async with httpx.AsyncClient(timeout=MOLLIE_API_TIMEOUT) as client:
@@ -166,16 +185,28 @@ class MollieService:
             response_data = await self._make_request(
                 method="POST",
                 endpoint="payments",
-                data=payment_data.dict(exclude_none=True)
+                data=payment_data.model_dump(exclude_none=True)
             )
 
             payment_response = MolliePaymentResponse(**response_data)
+
+            links = getattr(payment_response, "_links", None)
+            checkout_url = None
+            if links:
+                checkout = getattr(links, "checkout", None)
+                if checkout:
+                    if isinstance(checkout, dict):
+                        checkout_url = checkout.get("href")
+                    else:
+                        checkout_url = getattr(checkout, "href", None)
+                        if checkout_url is None and hasattr(checkout, "get"):
+                            checkout_url = checkout.get("href")
 
             logger.info(
                 "Mollie payment created",
                 payment_id=payment_response.id,
                 status=payment_response.status,
-                checkout_url=payment_response._links.checkout.get('href') if payment_response._links.checkout else None
+                checkout_url=checkout_url
             )
 
             return payment_response
@@ -235,7 +266,7 @@ class MollieService:
             response_data = await self._make_request(
                 method="POST",
                 endpoint="customers",
-                data=customer_data.dict(exclude_none=True)
+                data=customer_data.model_dump(exclude_none=True)
             )
 
             customer_response = MollieCustomerResponse(**response_data)
@@ -278,7 +309,7 @@ class MollieService:
             response_data = await self._make_request(
                 method="PATCH",
                 endpoint=f"customers/{customer_id}",
-                data=customer_data.dict(exclude_none=True)
+                data=customer_data.model_dump(exclude_none=True)
             )
 
             return MollieCustomerResponse(**response_data)
@@ -302,7 +333,7 @@ class MollieService:
             response_data = await self._make_request(
                 method="POST",
                 endpoint=f"customers/{customer_id}/mandates",
-                data=mandate_data.dict(exclude_none=True)
+                data=mandate_data.model_dump(exclude_none=True)
             )
 
             mandate_response = MollieMandateResponse(**response_data)
@@ -369,7 +400,7 @@ class MollieService:
             response_data = await self._make_request(
                 method="POST",
                 endpoint=f"customers/{customer_id}/subscriptions",
-                data=subscription_data.dict(exclude_none=True)
+                data=subscription_data.model_dump(exclude_none=True)
             )
 
             subscription_response = MollieSubscriptionResponse(**response_data)
@@ -463,7 +494,7 @@ class MollieService:
             response_data = await self._make_request(
                 method="POST",
                 endpoint=f"payments/{payment_id}/refunds",
-                data=refund_data.dict(exclude_none=True)
+                data=refund_data.model_dump(exclude_none=True)
             )
 
             refund_response = MollieRefundResponse(**response_data)
@@ -536,8 +567,17 @@ class MollieService:
 
     def get_checkout_url(self, payment: MolliePaymentResponse) -> Optional[str]:
         """Extract checkout URL from payment response."""
-        if payment._links and payment._links.checkout:
-            return payment._links.checkout.get('href')
+        links = getattr(payment, "_links", None)
+        if not links:
+            return None
+
+        checkout = getattr(links, "checkout", None)
+        if not checkout:
+            return None
+
+        if isinstance(checkout, dict):
+            return checkout.get("href")
+        return getattr(checkout, "href", None) or (checkout.get("href") if hasattr(checkout, "get") else None)
         return None
 
     async def list_payment_methods(self, amount: Optional[MollieAmount] = None) -> List[Dict[str, Any]]:

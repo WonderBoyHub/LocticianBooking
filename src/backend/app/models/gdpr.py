@@ -4,11 +4,11 @@ GDPR compliance models for data protection and consent management.
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.mixins import BaseModel, UUIDMixin
 
 
@@ -136,13 +136,15 @@ class DataRetentionPolicy(Base, BaseModel):
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Data types covered
-    data_types: Mapped[List[str]] = mapped_column(JSONB, nullable=False)
+    _JSONType = JSONB if IS_POSTGRES else JSON
+
+    data_types: Mapped[List[str]] = mapped_column(_JSONType, nullable=False)
 
     # Retention periods (in days)
     retention_period_days: Mapped[int] = mapped_column(nullable=False)
 
     # Deletion rules
-    deletion_criteria: Mapped[Dict[str, str]] = mapped_column(JSONB, nullable=False)
+    deletion_criteria: Mapped[Dict[str, str]] = mapped_column(_JSONType, nullable=False)
     auto_delete_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Legal basis
@@ -169,7 +171,7 @@ class DataDeletionLog(Base, UUIDMixin):
     # What was deleted
     data_type: Mapped[str] = mapped_column(String(100), nullable=False)
     table_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    record_ids: Mapped[List[str]] = mapped_column(JSONB, nullable=False)
+    record_ids: Mapped[List[str]] = mapped_column(_JSONType, nullable=False)
     record_count: Mapped[int] = mapped_column(nullable=False)
 
     # Deletion context
