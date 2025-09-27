@@ -33,7 +33,8 @@ _is_postgres = _db_url.scheme.startswith("postgres")
 IS_POSTGRES = _is_postgres
 
 engine_kwargs = {
-    "echo": settings.DEBUG,
+    # Respect explicit SQL echo configuration instead of coupling it to DEBUG.
+    "echo": settings.SQL_ECHO,
     "future": True,  # Use SQLAlchemy 2.0 style
 }
 

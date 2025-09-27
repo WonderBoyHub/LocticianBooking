@@ -409,6 +409,10 @@ alembic downgrade -1
 - **Access Logs**: Uvicorn access logs
 - **Database Logs**: PostgreSQL logs
 
+> **Tip:** Set `SQL_ECHO=false` (default) to silence SQLAlchemy's query echo in
+> local development. Enable it only when you need to inspect generated SQL
+> statements.
+
 ### Debug Mode
 
 Enable debug mode for development:
