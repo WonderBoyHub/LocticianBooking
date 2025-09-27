@@ -56,7 +56,7 @@ def configure_logging() -> None:
     # Set log levels for specific modules
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(
-        logging.INFO if settings.DEBUG else logging.WARNING
+        logging.INFO if settings.SQL_ECHO else logging.WARNING
     )
 
 
