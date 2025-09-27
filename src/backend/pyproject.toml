@@ -54,6 +54,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
 ]
+pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["app"]

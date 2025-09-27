@@ -4,13 +4,16 @@ Email template and queue models.
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, IS_POSTGRES
 from app.models.enums import EmailStatus, TemplateType
 from app.models.mixins import BaseModel, UUIDMixin
+
+
+JSON_TYPE = JSONB if IS_POSTGRES else JSON
 
 
 class EmailTemplate(Base, BaseModel):
@@ -25,7 +28,7 @@ class EmailTemplate(Base, BaseModel):
     text_content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Template variables documentation
-    available_variables: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    available_variables: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON_TYPE, nullable=True)
 
     # Versioning
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -67,7 +70,7 @@ class EmailQueue(Base, UUIDMixin):
     text_content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Context
-    template_variables: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    template_variables: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON_TYPE, nullable=True)
     user_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id"),
