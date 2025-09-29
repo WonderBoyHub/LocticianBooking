@@ -179,6 +179,7 @@ Copy `.env.example` to `.env` and configure:
 ### Optional Settings
 - `INSTAGRAM_*`: Instagram integration
 - `CORS_ORIGINS`: Allowed frontend origins
+- `JWT_JWKS_URL`, `JWT_ALLOWED_ALGORITHMS`, `JWT_AUDIENCE`, `JWT_ISSUER`: Optional Neon RLS JWKS integration
 - Feature flags and business rules
 
 ## Security
