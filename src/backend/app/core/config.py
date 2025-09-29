@@ -80,7 +80,18 @@ class Settings(BaseSettings):
     # File Upload
     MAX_FILE_SIZE_MB: int = 10
     UPLOAD_PATH: str = "./uploads"
-    ALLOWED_EXTENSIONS: List[str] = ["jpg", "jpeg", "png", "gif", "pdf"]
+    ALLOWED_EXTENSIONS: List[str] = [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "pdf",
+        "mp4",
+        "mov",
+        "webm",
+        "mkv",
+    ]
 
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60

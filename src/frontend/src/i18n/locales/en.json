@@ -72,6 +72,25 @@
       "hasAccount": "Already have an account?",
       "signIn": "Sign in here"
     },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email to receive a reset link.",
+      "submit": "Send reset link",
+      "successMessage": "If the email exists in our system, a reset link has been sent.",
+      "backToLogin": "Back to login",
+      "error": "We could not send the reset link. Please try again."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "subtitle": "Choose a new secure password.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Update password",
+      "successMessage": "Your password has been updated. Redirecting to login...",
+      "backToLogin": "Back to login",
+      "error": "We could not reset the password. Please try again.",
+      "invalidToken": "The reset link is invalid or has expired."
+    },
     "errors": {
       "invalidCredentials": "Invalid email or password",
       "emailExists": "Email is already in use",
@@ -133,11 +152,41 @@
     "from": "From",
     "bookNow": "Book Now",
     "learnMore": "Learn More",
+    "heroBadge": "Experts in locs & natural hair",
+    "heroTitle": "Choose your next treatment",
+    "heroSubtitle": "Discover handcrafted services, tailored guidance and caring maintenance for your natural hair.",
+    "allServices": "All services",
+    "emptyState": "No services to display in this category yet.",
+    "requirements": "How to prepare",
+    "aftercare": "Aftercare",
+    "bookCta": "Book appointment",
     "categories": {
       "maintenance": "Maintenance",
       "styling": "Styling",
       "treatment": "Treatment",
       "consultation": "Consultation"
+    },
+    "media": {
+      "title": "Gallery & inspiration",
+      "subtitle": "Browse highlighted photos and videos from recent appointments.",
+      "videoBadge": "Video"
+    }
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms, conditions & GDPR",
+      "subtitle": "How we handle your information and consents.",
+      "version": "Version {{version}}",
+      "updated": "Updated {{date}}",
+      "error": "Unable to load the page. Showing the last known information.",
+      "fallback": {
+        "processingTitle": "Processing of personal data",
+        "processingText": "We only collect the information necessary to deliver our services. Data is stored securely and only as long as required by applicable legislation.",
+        "rightsTitle": "Consent and rights",
+        "rightsText": "You can withdraw your consent at any time and request access, correction or deletion of your data. Contact us via customer service to exercise your rights.",
+        "cookiesTitle": "Cookies",
+        "cookiesText": "We use only technical cookies required to ensure a stable and secure booking experience. No tracking cookies are used without explicit consent."
+      }
     }
   },
   "calendar": {
@@ -294,6 +343,14 @@
     "subject": "Subject",
     "message": "Message",
     "messageSent": "Message sent"
+  },
+  "landing": {
+    "media": {
+      "title": "Gallery & inspiration",
+      "subtitle": "Explore our Instagram universe alongside exclusive uploads straight from the salon.",
+      "error": "We couldn’t load the gallery right now. Please try again later.",
+      "empty": "We haven’t featured any uploaded media yet. Check back soon."
+    }
   },
   "footer": {
     "rights": "All rights reserved",

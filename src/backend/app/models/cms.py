@@ -23,6 +23,7 @@ class CMSPage(Base, BaseModel):
     content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     excerpt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     page_type: Mapped[PageType] = mapped_column(default=PageType.PAGE, nullable=False)
+    gdpr_version: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     # SEO
     meta_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
@@ -50,9 +51,15 @@ class CMSPage(Base, BaseModel):
         ForeignKey("users.id"),
         nullable=True,
     )
+    hero_media_id: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False),
+        ForeignKey("media_files.id"),
+        nullable=True,
+    )
 
     # Relationships
     author: Mapped[Optional["User"]] = relationship("User")
+    hero_media: Mapped[Optional["MediaFile"]] = relationship("MediaFile")
 
     @property
     def is_currently_published(self) -> bool:

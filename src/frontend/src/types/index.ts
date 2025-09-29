@@ -284,6 +284,65 @@ export interface PageContent {
   updatedAt: string;
 }
 
+export type CmsPageType =
+  | 'page'
+  | 'blog_post'
+  | 'service_page'
+  | 'product_page'
+  | 'landing_page';
+
+export interface CmsPageSummary {
+  id: string;
+  title: string;
+  slug: string;
+  pageType: CmsPageType;
+  isPublished: boolean;
+  publishedAt?: string | null;
+  updatedAt: string;
+}
+
+export interface CmsPage extends CmsPageSummary {
+  content?: string | null;
+  excerpt?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  metaKeywords?: string[] | null;
+  gdprVersion?: string | null;
+  heroMedia?: MediaAsset | null;
+}
+
+export interface MediaAsset {
+  id: string;
+  url: string;
+  originalFilename: string;
+  mimeType: string;
+  fileSize: number;
+  altText?: string | null;
+  caption?: string | null;
+  isFeatured: boolean;
+  displayOrder: number;
+  isPublished: boolean;
+  publishedAt: string;
+}
+
+export interface MediaAssetAdmin extends MediaAsset {
+  filename: string;
+  filePath: string;
+  fileSizeMb: number;
+  uploadedBy?: string | null;
+  uploadedAt: string;
+}
+
+export interface PasswordResetRequestPayload {
+  email: string;
+}
+
+export interface PasswordResetConfirmPayload {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 // WebSocket types
 export interface SocketEvent {
   type: 'appointment_update' | 'new_booking' | 'availability_change' | 'user_update';

@@ -66,6 +66,25 @@
       "hasAccount": "Har du allerede en konto?",
       "signIn": "Log ind her"
     },
+    "forgotPassword": {
+      "title": "Glemt adgangskode",
+      "subtitle": "Indtast din e-mail for at nulstille din adgangskode.",
+      "submit": "Send nulstillingslink",
+      "successMessage": "Hvis e-mailen findes i vores system, er der sendt et nulstillingslink.",
+      "backToLogin": "Tilbage til login",
+      "error": "Vi kunne ikke sende nulstillingslinket. Prøv venligst igen."
+    },
+    "resetPassword": {
+      "title": "Nulstil adgangskode",
+      "subtitle": "Vælg en ny sikker adgangskode.",
+      "newPassword": "Ny adgangskode",
+      "confirmPassword": "Bekræft adgangskode",
+      "submit": "Opdater adgangskode",
+      "successMessage": "Din adgangskode er opdateret. Du videresendes til login.",
+      "backToLogin": "Tilbage til login",
+      "error": "Vi kunne ikke nulstille adgangskoden. Prøv igen.",
+      "invalidToken": "Nulstillingslinket er ugyldigt eller udløbet."
+    },
     "errors": {
       "invalidCredentials": "Ugyldig e-mail eller adgangskode",
       "emailExists": "E-mail er allerede i brug",
@@ -127,11 +146,41 @@
     "from": "Fra",
     "bookNow": "Book nu",
     "learnMore": "Læs mere",
+    "heroBadge": "Eksperter i locs & naturligt hår",
+    "heroTitle": "Vælg din næste behandling",
+    "heroSubtitle": "Oplev håndlavede services, specialiseret vejledning og kærlig pleje til dit naturlige hår.",
+    "allServices": "Alle services",
+    "emptyState": "Ingen services at vise i denne kategori endnu.",
+    "requirements": "Sådan forbereder du dig",
+    "aftercare": "Efterbehandling",
+    "bookCta": "Book tid",
     "categories": {
       "maintenance": "Vedligeholdelse",
       "styling": "Styling",
       "treatment": "Behandling",
       "consultation": "Konsultation"
+    },
+    "media": {
+      "title": "Galleri & inspiration",
+      "subtitle": "Se udvalgte billeder og videoer fra de seneste behandlinger.",
+      "videoBadge": "Video"
+    }
+  },
+  "legal": {
+    "terms": {
+      "title": "Vilkår, betingelser & GDPR",
+      "subtitle": "Sådan behandler vi dine oplysninger og samtykker.",
+      "version": "Version {{version}}",
+      "updated": "Opdateret {{date}}",
+      "error": "Kunne ikke indlæse siden. Viser seneste kendte information.",
+      "fallback": {
+        "processingTitle": "Behandling af persondata",
+        "processingText": "Vi indsamler kun de oplysninger, der er nødvendige for at levere vores tjenester. Data opbevares sikkert og kun så længe det er nødvendigt i henhold til gældende lovgivning.",
+        "rightsTitle": "Samtykke og rettigheder",
+        "rightsText": "Du kan til enhver tid trække dit samtykke tilbage og anmode om indsigt, rettelse eller sletning af dine data. Kontakt os via kundeservice for at udøve dine rettigheder.",
+        "cookiesTitle": "Cookies",
+        "cookiesText": "Vi anvender kun tekniske cookies, der er nødvendige for at sikre en stabil og sikker bookingoplevelse. Ingen sporingscookies anvendes uden udtrykkeligt samtykke."
+      }
     }
   },
   "calendar": {
@@ -288,6 +337,14 @@
     "subject": "Emne",
     "message": "Besked",
     "messageSent": "Besked sendt"
+  },
+  "landing": {
+    "media": {
+      "title": "Galleri & inspiration",
+      "subtitle": "Udforsk både vores Instagram-univers og eksklusive uploads direkte fra salonen.",
+      "error": "Vi kunne ikke hente galleriet lige nu. Prøv igen senere.",
+      "empty": "Vi har endnu ikke fremhævet uploadede medier. Kig snart forbi igen."
+    }
   },
   "footer": {
     "rights": "Alle rettigheder forbeholdes",

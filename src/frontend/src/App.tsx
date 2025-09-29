@@ -24,6 +24,10 @@ import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { LandingPage } from './pages/customer/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { TermsPage } from './pages/legal/TermsPage';
+import { ServicesCatalogPage } from './pages/customer/ServicesCatalogPage';
 
 // Customer pages - lazy load
 const BookingPage = lazy(() => import('./pages/customer/BookingPage').then(m => ({ default: m.BookingPage })));
@@ -186,6 +190,11 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/tjenester" element={<ServicesCatalogPage />} />
+          <Route path="/services/catalog" element={<ServicesCatalogPage />} />
 
           {/* Customer Routes - Lazy loaded */}
           <Route

@@ -385,6 +385,7 @@ CREATE TABLE cms_pages (
     content TEXT,
     excerpt TEXT,
     page_type page_type NOT NULL DEFAULT 'page',
+    gdpr_version VARCHAR(20),
 
     -- SEO
     meta_title VARCHAR(200),
@@ -401,6 +402,7 @@ CREATE TABLE cms_pages (
 
     -- Authoring
     author_id UUID REFERENCES users(id),
+    hero_media_id UUID REFERENCES media_files(id),
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -418,10 +420,17 @@ CREATE TABLE media_files (
     height INTEGER,
     alt_text TEXT,
     caption TEXT,
+    is_featured BOOLEAN DEFAULT FALSE,
+    display_order INTEGER DEFAULT 0,
+    is_published BOOLEAN DEFAULT TRUE,
+    published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
     uploaded_by UUID REFERENCES users(id),
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX idx_media_files_featured ON media_files (is_featured, display_order)
+WHERE is_featured = TRUE AND is_published = TRUE;
 
 -- =====================================================
 -- INSTAGRAM INTEGRATION
