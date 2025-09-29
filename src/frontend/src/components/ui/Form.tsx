@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, type FieldValues, type UseFormReturn, type SubmitHandler, type DefaultValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 

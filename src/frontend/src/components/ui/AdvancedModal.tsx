@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { X, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react';
 
 // Modal Types

@@ -1,5 +1,5 @@
 import React from 'react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '../ui';

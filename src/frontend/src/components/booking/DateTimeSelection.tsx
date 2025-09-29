@@ -15,7 +15,7 @@ import {
 import { useGetAvailableSlotsQuery } from '../../store/api';
 import { Button, LoadingSpinner } from '../ui';
 import { formatDate, formatTime } from '../../i18n';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, isBefore, startOfDay } from 'date-fns';
 import { da, enUS } from 'date-fns/locale';
 

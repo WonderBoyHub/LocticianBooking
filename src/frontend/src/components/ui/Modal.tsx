@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from './Button';
