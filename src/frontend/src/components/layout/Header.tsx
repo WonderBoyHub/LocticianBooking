@@ -13,7 +13,7 @@ import {
   Mail
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 export interface HeaderProps {
   user?: {

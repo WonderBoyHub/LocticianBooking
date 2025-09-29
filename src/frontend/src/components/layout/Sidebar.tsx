@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import {
   CalendarDays,
   Users,

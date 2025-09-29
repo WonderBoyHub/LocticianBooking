@@ -15,7 +15,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfDay, endOfDay } from 'date-fns';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { CalendarEvent, Appointment } from '../../types';
 
 export interface AdvancedCalendarProps {

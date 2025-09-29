@@ -13,7 +13,7 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 export interface UploadedFile {
   id: string;

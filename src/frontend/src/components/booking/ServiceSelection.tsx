@@ -7,7 +7,7 @@ import { selectService, nextStep } from '../../store/slices/bookingSlice';
 import { useGetServicesQuery, useGetServiceCategoriesQuery } from '../../store/api';
 import { Button, Input, Select, LoadingSpinner, Badge } from '../ui';
 import { formatCurrency } from '../../i18n';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import type { Service, ServiceCategory } from '../../types';
 
 interface ServiceCardProps {

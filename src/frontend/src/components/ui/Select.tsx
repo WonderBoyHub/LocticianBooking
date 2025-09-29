@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
 

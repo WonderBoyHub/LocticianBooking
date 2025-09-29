@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle } from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, Type } from 'lucide-react';
 
 export interface RichTextEditorProps {
