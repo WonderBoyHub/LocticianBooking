@@ -109,6 +109,8 @@ class EmailSender:
         self.smtp_password = settings.SMTP_PASSWORD
         self.from_email = settings.SMTP_FROM
         self.from_name = settings.SMTP_FROM_NAME
+        self.smtp_starttls = getattr(settings, "SMTP_STARTTLS", True)
+        self.smtp_ssl = getattr(settings, "SMTP_SSL", False)
 
     async def send_email(
         self,
@@ -166,7 +168,8 @@ class EmailSender:
                 port=self.smtp_port,
                 username=self.smtp_user,
                 password=self.smtp_password,
-                use_tls=True,
+                start_tls=self.smtp_starttls,
+                use_tls=self.smtp_ssl,
             )
 
             logger.info(
