@@ -157,9 +157,8 @@ export const LandingPage: React.FC = () => {
 
   const stats = [
     { icon: Users, value: '500+', label: 'Tilfredse kunder' },
-    { icon: Award, value: '5 år', label: 'Erfaring' },
     { icon: Star, value: '4.9', label: 'Gennemsnitlig rating' },
-    { icon: Calendar, value: '1000+', label: 'Afsluttede behandlinger' }
+    { icon: Calendar, value: 'Hundredevis', label: 'Af glade kunder 😊' }
   ];
 
   return (
@@ -167,16 +166,16 @@ export const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-brand-light to-brand-accent py-20 lg:py-32 overflow-hidden">
         <div className="container-custom relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-1 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-dark mb-6 text-balance">
-                Professionel{' '}
-                <span className="text-gradient">Loctician</span>{' '}
-                i København
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-dark mb-6 text-balance">
+                Professionel{' '} 
+                <span className="text-gradient">Loctician</span>{' '} i København
+                
               </h1>
 
               <div className="mb-6">
@@ -249,29 +248,6 @@ export const LandingPage: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-2xl bg-white shadow-brand overflow-hidden">
-                <img
-                  src="/images/hero-locs.jpg"
-                  alt="Professionel loc styling"
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                />
-              </div>
-              {/* Floating stat cards */}
-              <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-brand p-4">
-                <div className="flex items-center space-x-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <span className="font-bold text-brand-dark">4.9/5</span>
-                </div>
-                <p className="text-sm text-gray-600">500+ anmeldelser</p>
-              </div>
-            </motion.div>
           </div>
         </div>
 
@@ -284,7 +260,7 @@ export const LandingPage: React.FC = () => {
       {/* Stats Section */}
       <section className="py-16 bg-white">
         <div className="container-custom">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -368,7 +344,7 @@ export const LandingPage: React.FC = () => {
                 {[
                   {
                     title: 'Professionel ekspertise',
-                    description: '5+ års erfaring med alle loc-typer og teknikker'
+                    description: 'Erfaring med alle hårtyper og teknikker'
                   },
                   {
                     title: 'Personlig tilgang',
@@ -380,7 +356,7 @@ export const LandingPage: React.FC = () => {
                   },
                   {
                     title: 'Fleksible tider',
-                    description: 'Book online 24/7 med øjeblikkelig bekræftelse'
+                    description: 'Book online 24/7 og find en tid der passer dig'
                   }
                 ].map((feature) => (
                   <div key={feature.title} className="flex items-start space-x-3">

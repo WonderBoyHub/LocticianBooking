@@ -53,7 +53,6 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
   const navigationItems = [
     { href: '/', label: 'Hjem', labelEn: 'Home' },
     { href: '/services', label: 'Tjenester', labelEn: 'Services' },
-    { href: '/about', label: 'Om os', labelEn: 'About' },
     { href: '/contact', label: 'Kontakt', labelEn: 'Contact' },
   ];
 

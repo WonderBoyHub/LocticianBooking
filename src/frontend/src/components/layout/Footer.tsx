@@ -13,13 +13,6 @@ import {
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
-  const quickLinks = [
-    { href: '/services', label: 'Tjenester' },
-    { href: '/about', label: 'Om os' },
-    { href: '/contact', label: 'Kontakt' },
-    { href: '/book', label: 'Book tid' },
-  ];
-
   const legalLinks = [
     { href: '/privacy', label: 'Privatlivspolitik' },
     { href: '/terms', label: 'Vilkår og betingelser' },
@@ -73,22 +66,6 @@ export const Footer: React.FC = () => {
                 <Facebook className="h-4 w-4" />
               </a>
             </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-serif font-semibold">Hurtige Links</h3>
-            <nav className="space-y-2">
-              {quickLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="block text-brown-200 hover:text-white transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
           </div>
 
           {/* Services */}
