@@ -1,10 +1,12 @@
 // Core entity types
+export type UserRole = 'customer' | 'loctician' | 'admin';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   phone?: string;
-  role: 'customer' | 'loctician' | 'admin';
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
   avatar?: string;
@@ -165,6 +167,25 @@ export interface ApiError {
   code: string;
   details?: Record<string, any>;
 }
+
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  confirm_password: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  role?: UserRole;
+  marketing_consent?: boolean;
+  gdpr_consent: boolean;
+}
+
+export interface RegisterApiResponse {
+  user_id: string;
+  email: string;
+  message: string;
+  email_verification_required: boolean;
 
 // Instagram content types
 export interface InstagramPostDto {

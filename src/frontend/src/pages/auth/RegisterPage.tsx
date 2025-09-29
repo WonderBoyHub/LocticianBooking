@@ -6,18 +6,43 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { loginSuccess, selectIsAuthenticated } from '../../store/slices/authSlice';
+import { useAppSelector } from '../../store/hooks';
+import { selectIsAuthenticated } from '../../store/slices/authSlice';
 import { useRegisterMutation } from '../../store/api';
 import { Button, Input, Card, CardContent } from '../../components/ui';
+import type { RegisterApiResponse } from '../../types';
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  phone: z.string().min(8, 'Please enter a valid phone number'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  firstName: z
+    .string()
+    .trim()
+    .min(2, 'First name must be at least 2 characters long'),
+  lastName: z
+    .string()
+    .trim()
+    .min(2, 'Last name must be at least 2 characters long'),
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email address'),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      value => !value || value.replace(/\D/g, '').length >= 8,
+      'Please enter a valid phone number'
+    ),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/\d/, 'Password must contain at least one number'),
   confirmPassword: z.string(),
-  agreeTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
+  marketingConsent: z.boolean(),
+  gdprConsent: z.boolean().refine(val => val === true, 'You must accept the GDPR terms'),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -27,20 +52,32 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export const RegisterPage: React.FC = () => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [register] = useRegisterMutation();
+  const [successResponse, setSuccessResponse] = React.useState<RegisterApiResponse | null>(null);
 
   const {
     register: registerField,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
+    clearErrors,
+    reset,
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      marketingConsent: false,
+      gdprConsent: false,
+    },
   });
 
   // Redirect if already authenticated
@@ -50,16 +87,40 @@ export const RegisterPage: React.FC = () => {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      const { confirmPassword, agreeTerms, ...registerData } = data;
-      const result = await register(registerData).unwrap();
+      clearErrors('root');
+      setSuccessResponse(null);
 
-      if (result.success) {
-        dispatch(loginSuccess(result.data));
-      } else {
-        setError('root', { message: result.message || 'Registration failed' });
-      }
+      const payload = {
+        email: data.email,
+        password: data.password,
+        confirm_password: data.confirmPassword,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone?.trim() || undefined,
+        role: 'customer' as const,
+        marketing_consent: data.marketingConsent,
+        gdpr_consent: data.gdprConsent,
+      };
+
+      const response = await register(payload).unwrap();
+      setSuccessResponse(response);
+      reset({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: '',
+        marketingConsent: false,
+        gdprConsent: false,
+      });
     } catch (error: any) {
-      setError('root', { message: error.data?.message || 'Registration failed' });
+      const message =
+        error?.data?.detail ||
+        error?.data?.message ||
+        error?.data?.errors?.[0]?.message ||
+        'Registration failed';
+      setError('root', { message });
     }
   };
 
@@ -79,6 +140,27 @@ export const RegisterPage: React.FC = () => {
           </p>
         </div>
 
+        {successResponse && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6"
+          >
+            <h2 className="text-lg font-semibold text-green-700 mb-2">
+              {t('auth.register.successTitle')}
+            </h2>
+            <p className="text-sm text-green-800 mb-4">
+              {successResponse.message}
+            </p>
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              {t('auth.register.goToLogin')}
+            </Link>
+          </motion.div>
+        )}
+
         <Card>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -94,14 +176,24 @@ export const RegisterPage: React.FC = () => {
               )}
 
               {/* Name */}
-              <Input
-                label={t('auth.register.name')}
-                placeholder="Enter your full name"
-                leftIcon={<User className="w-4 h-4" />}
-                error={errors.name?.message}
-                fullWidth
-                {...registerField('name')}
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Input
+                  label={t('auth.register.firstName')}
+                  placeholder="Enter your first name"
+                  leftIcon={<User className="w-4 h-4" />}
+                  error={errors.firstName?.message}
+                  fullWidth
+                  {...registerField('firstName')}
+                />
+                <Input
+                  label={t('auth.register.lastName')}
+                  placeholder="Enter your last name"
+                  leftIcon={<User className="w-4 h-4" />}
+                  error={errors.lastName?.message}
+                  fullWidth
+                  {...registerField('lastName')}
+                />
+              </div>
 
               {/* Email */}
               <Input
@@ -165,24 +257,38 @@ export const RegisterPage: React.FC = () => {
                 {...registerField('confirmPassword')}
               />
 
-              {/* Terms agreement */}
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="agreeTerms"
-                  className="mt-1 w-4 h-4 text-brand-primary bg-gray-100 border-gray-300 rounded focus:ring-brand-primary focus:ring-2"
-                  {...registerField('agreeTerms')}
-                />
-                <label htmlFor="agreeTerms" className="ml-3 text-sm text-gray-600">
-                  {t('auth.register.agreeTerms')}
-                  <Link to="/terms" className="text-brand-primary hover:text-brand-dark ml-1">
-                    terms and conditions
-                  </Link>
-                </label>
+              {/* Consents */}
+              <div className="space-y-3">
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="gdprConsent"
+                    className="mt-1 w-4 h-4 text-brand-primary bg-gray-100 border-gray-300 rounded focus:ring-brand-primary focus:ring-2"
+                    {...registerField('gdprConsent')}
+                  />
+                  <label htmlFor="gdprConsent" className="ml-3 text-sm text-gray-600">
+                    {t('auth.register.gdprConsent')}{' '}
+                    <Link to="/terms" className="text-brand-primary hover:text-brand-dark">
+                      {t('auth.register.termsLink')}
+                    </Link>
+                  </label>
+                </div>
+                {errors.gdprConsent && (
+                  <p className="text-red-600 text-sm">{errors.gdprConsent.message}</p>
+                )}
+
+                <div className="flex items-start">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    className="mt-1 w-4 h-4 text-brand-primary bg-gray-100 border-gray-300 rounded focus:ring-brand-primary focus:ring-2"
+                    {...registerField('marketingConsent')}
+                  />
+                  <label htmlFor="marketingConsent" className="ml-3 text-sm text-gray-600">
+                    {t('auth.register.marketingConsent')}
+                  </label>
+                </div>
               </div>
-              {errors.agreeTerms && (
-                <p className="text-red-600 text-sm">{errors.agreeTerms.message}</p>
-              )}
 
               {/* Submit button */}
               <Button
