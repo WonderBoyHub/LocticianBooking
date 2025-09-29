@@ -424,9 +424,63 @@ INSERT INTO cms_pages (title, slug, content, page_type, is_published, published_
     <li>Undgå styling produkter dagen før</li>
     <li>Medbringe egen hovedbeklædning hvis ønsket</li>
   </ul>',
+'page', true, NOW(),
+'Booking Politik - Regler og Betingelser',
+'Læs vores booking politik, aflysningsregler og betalingsbetingelser før din aftale.');
+
+INSERT INTO cms_pages (
+  title,
+  slug,
+  content,
+  page_type,
+  is_published,
+  published_at,
+  meta_title,
+  meta_description,
+  gdpr_version
+) VALUES
+('Vilkår og GDPR', 'terms-of-service',
+ '<h1>Vilkår, betingelser og GDPR</h1>
+
+  <p>Vi behandler dine persondata med størst mulig omhu og i henhold til EU''s databeskyttelsesforordning (GDPR). Ved at bruge vores services accepterer du følgende vilkår:</p>
+
+  <h2>Indsamling af data</h2>
+  <p>Vi indsamler kun de oplysninger, der er nødvendige for at kunne tilbyde og forbedre vores ydelser, herunder kontaktoplysninger, bookinghistorik og eventuelle noter du deler med os.</p>
+
+  <h2>Dine rettigheder</h2>
+  <ul>
+    <li>Ret til indsigt i de oplysninger vi har registreret om dig</li>
+    <li>Ret til berigtigelse af forkerte eller ufuldstændige oplysninger</li>
+    <li>Ret til sletning (''retten til at blive glemt'') hvor lovgivningen tillader det</li>
+    <li>Ret til dataportabilitet og begrænsning af behandling</li>
+  </ul>
+
+  <h2>Samtykke</h2>
+  <p>Vi baserer behandlingen af dine data på et eksplicit samtykke, som du til enhver tid kan trække tilbage ved at kontakte os på info@justloccit.dk.</p>
+
+  <h2>Opbevaring</h2>
+  <p>Dine data opbevares sikkert og slettes løbende, når de ikke længere er nødvendige. Fakturadata opbevares i henhold til gældende regnskabslovgivning.</p>',
  'page', true, NOW(),
- 'Booking Politik - Regler og Betingelser',
- 'Læs vores booking politik, aflysningsregler og betalingsbetingelser før din aftale.');
+ 'Vilkår og GDPR - Just Locc It',
+ 'Læs om hvordan vi indsamler, bruger og beskytter dine persondata samt hvilke rettigheder du har som kunde.',
+ '1.0.0');
+
+INSERT INTO media_files (
+    filename,
+    original_filename,
+    file_path,
+    file_size,
+    mime_type,
+    alt_text,
+    caption,
+    is_featured,
+    display_order,
+    is_published,
+    published_at
+) VALUES
+('sample-gallery-1.jpg', 'gallery-1.jpg', 'sample-gallery-1.jpg', 245678, 'image/jpeg', 'Før og efter starter locs', 'Før/efter starter locs med naturlig finish', true, 1, true, NOW()),
+('sample-gallery-2.jpg', 'gallery-2.jpg', 'sample-gallery-2.jpg', 312456, 'image/jpeg', 'Vedligeholdelse af modne locs', 'Vedligeholdelse og styling af modne locs', true, 2, true, NOW()),
+('sample-gallery-video.mp4', 'gallery-video.mp4', 'sample-gallery-video.mp4', 1048576, 'video/mp4', 'Kort video fra salonen', 'En kort præsentation fra vores salon', false, 3, true, NOW());
 
 -- =====================================================
 -- SAMPLE INSTAGRAM POSTS

@@ -12,6 +12,7 @@ This application provides a comprehensive booking system with:
 """
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Dict
 
 import structlog
@@ -23,6 +24,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.endpoints import (
     auth,
@@ -37,6 +39,8 @@ from app.api.v1.endpoints import (
     websocket_calendar,
     monitoring,
     instagram,
+    cms,
+    media,
 )
 from app.middleware.enhanced_security import (
     SecurityHeadersMiddleware,
@@ -128,6 +132,10 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
     openapi_url="/openapi.json" if settings.DEBUG else None,
 )
+
+# Ensure upload directory exists and expose uploaded media as static files
+Path(settings.UPLOAD_PATH).mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=settings.UPLOAD_PATH), name="media")
 
 # Add enhanced security middleware
 app.add_middleware(SecurityHeadersMiddleware)
@@ -394,6 +402,18 @@ app.include_router(
     instagram.router,
     prefix=f"{settings.API_V1_PREFIX}/instagram",
     tags=["Instagram"],
+)
+
+app.include_router(
+    cms.router,
+    prefix=f"{settings.API_V1_PREFIX}/cms",
+    tags=["CMS"],
+)
+
+app.include_router(
+    media.router,
+    prefix=f"{settings.API_V1_PREFIX}/media",
+    tags=["Media Library"],
 )
 
 # Rate-limited endpoints

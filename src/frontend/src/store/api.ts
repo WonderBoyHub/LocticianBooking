@@ -15,10 +15,60 @@ import type {
   RegisterApiResponse,
   InstagramPostDto,
   InstagramPostUpdatePayload,
+  CmsPage,
+  CmsPageSummary,
+  MediaAsset,
+  MediaAssetAdmin,
+  PasswordResetRequestPayload,
+  PasswordResetConfirmPayload,
 } from '../types';
 
 // Define the API base URL
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+const mapMediaAsset = (item: any): MediaAsset => ({
+  id: item.id,
+  url: item.url ?? item.public_url ?? item.media_url ?? item.file_path,
+  originalFilename: item.original_filename,
+  mimeType: item.mime_type,
+  fileSize: item.file_size,
+  altText: item.alt_text,
+  caption: item.caption,
+  isFeatured: item.is_featured,
+  displayOrder: item.display_order,
+  isPublished: item.is_published,
+  publishedAt: item.published_at,
+});
+
+const mapMediaAssetAdmin = (item: any): MediaAssetAdmin => ({
+  ...mapMediaAsset(item),
+  filename: item.filename,
+  filePath: item.file_path,
+  fileSizeMb: item.file_size_mb,
+  uploadedBy: item.uploaded_by,
+  uploadedAt: item.uploaded_at,
+});
+
+const mapCmsPageSummary = (item: any): CmsPageSummary => ({
+  id: item.id,
+  title: item.title,
+  slug: item.slug,
+  pageType: item.page_type,
+  isPublished: item.is_published,
+  publishedAt: item.published_at,
+  updatedAt: item.updated_at,
+});
+
+const mapCmsPage = (item: any): CmsPage => ({
+  ...mapCmsPageSummary(item),
+  content: item.content,
+  excerpt: item.excerpt,
+  metaTitle: item.meta_title,
+  metaDescription: item.meta_description,
+  metaKeywords: item.meta_keywords ?? undefined,
+  gdprVersion: item.gdpr_version,
+  heroMedia: item.hero_media ? mapMediaAsset(item.hero_media) : null,
+});
 
 export const api = createApi({
   reducerPath: 'api',
@@ -32,7 +82,7 @@ export const api = createApi({
         headers.set('authorization', `Bearer ${token}`);
       }
 
-      headers.set('content-type', 'application/json');
+      headers.set('accept', 'application/json');
       return headers;
     },
   }),
@@ -45,6 +95,8 @@ export const api = createApi({
     'Analytics',
     'PageContent',
     'InstagramPost',
+    'CmsPage',
+    'Media',
   ],
   endpoints: (builder) => ({
     // Authentication endpoints
@@ -75,6 +127,26 @@ export const api = createApi({
         method: 'POST',
       }),
       invalidatesTags: ['User'],
+    }),
+
+    requestPasswordReset: builder.mutation<{ message: string }, PasswordResetRequestPayload>({
+      query: (payload) => ({
+        url: '/auth/request-password-reset',
+        method: 'POST',
+        body: payload,
+      }),
+    }),
+
+    resetPassword: builder.mutation<{ message: string }, PasswordResetConfirmPayload>({
+      query: (payload) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body: {
+          token: payload.token,
+          new_password: payload.newPassword,
+          confirm_password: payload.confirmPassword,
+        },
+      }),
     }),
 
     // User endpoints
@@ -288,7 +360,7 @@ export const api = createApi({
       invalidatesTags: (result, error, { id }) => [{ type: 'PageContent', id }],
     }),
 
-    // File upload endpoint
+    // Legacy file upload endpoint
     uploadFile: builder.mutation<
       ApiResponse<{ url: string; filename: string }>,
       FormData
@@ -298,6 +370,120 @@ export const api = createApi({
         method: 'POST',
         body: formData,
       }),
+    }),
+
+    // CMS endpoints
+    getCmsPages: builder.query<CmsPageSummary[], { pageType?: string } | void>({
+      query: (params) => ({
+        url: '/cms/pages',
+        params: params?.pageType ? { page_type: params.pageType } : undefined,
+      }),
+      transformResponse: (response: { data: any[] }) =>
+        response.data?.map(mapCmsPageSummary) ?? [],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map((page) => ({ type: 'CmsPage' as const, id: page.slug })),
+              { type: 'CmsPage' as const, id: 'LIST' },
+            ]
+          : [{ type: 'CmsPage' as const, id: 'LIST' }],
+    }),
+
+    getCmsPage: builder.query<CmsPage, string>({
+      query: (slug) => `/cms/pages/${slug}`,
+      transformResponse: (response: { data: any }) => mapCmsPage(response.data),
+      providesTags: (result, error, slug) => [{ type: 'CmsPage', id: slug }],
+    }),
+
+    // Media library endpoints
+    getFeaturedMedia: builder.query<MediaAsset[], number | void>({
+      query: (limit) => ({
+        url: '/media/featured',
+        params: { limit: limit ?? 12 },
+      }),
+      transformResponse: (response: { data: any[] }) =>
+        response.data?.map(mapMediaAsset) ?? [],
+      providesTags: ['Media'],
+    }),
+
+    getMediaLibrary: builder.query<MediaAssetAdmin[], void>({
+      query: () => '/media',
+      transformResponse: (response: { data: any[] }) =>
+        response.data?.map(mapMediaAssetAdmin) ?? [],
+      providesTags: ['Media'],
+    }),
+
+    uploadMediaAsset: builder.mutation<
+      MediaAssetAdmin,
+      {
+        file: File;
+        altText?: string;
+        caption?: string;
+        isFeatured?: boolean;
+        displayOrder?: number;
+        isPublished?: boolean;
+      }
+    >({
+      query: ({ file, altText, caption, isFeatured, displayOrder, isPublished }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (altText) formData.append('alt_text', altText);
+        if (caption) formData.append('caption', caption);
+        if (typeof isFeatured === 'boolean') {
+          formData.append('is_featured', String(isFeatured));
+        }
+        if (typeof displayOrder === 'number') {
+          formData.append('display_order', displayOrder.toString());
+        }
+        if (typeof isPublished === 'boolean') {
+          formData.append('is_published', String(isPublished));
+        }
+
+        return {
+          url: '/media/upload',
+          method: 'POST',
+          body: formData,
+        };
+      },
+      invalidatesTags: ['Media'],
+    }),
+
+    updateMediaAsset: builder.mutation<
+      MediaAssetAdmin,
+      {
+        id: string;
+        data: Partial<{
+          altText: string | null;
+          caption: string | null;
+          isFeatured: boolean;
+          displayOrder: number;
+          isPublished: boolean;
+        }>;
+      }
+    >({
+      query: ({ id, data }) => {
+        const payload: Record<string, unknown> = {};
+        if (data.altText !== undefined) payload.alt_text = data.altText;
+        if (data.caption !== undefined) payload.caption = data.caption;
+        if (data.isFeatured !== undefined) payload.is_featured = data.isFeatured;
+        if (data.displayOrder !== undefined) payload.display_order = data.displayOrder;
+        if (data.isPublished !== undefined) payload.is_published = data.isPublished;
+
+        return {
+          url: `/media/${id}`,
+          method: 'PUT',
+          body: payload,
+        };
+      },
+      invalidatesTags: ['Media'],
+    }),
+
+    deleteMediaAsset: builder.mutation<{ success: boolean } | void, string>({
+      query: (id) => ({
+        url: `/media/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Media'],
     }),
 
     // Instagram endpoints
@@ -358,6 +544,8 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useLogoutMutation,
+  useRequestPasswordResetMutation,
+  useResetPasswordMutation,
   useGetCurrentUserQuery,
   useUpdateProfileMutation,
   useGetServicesQuery,
@@ -380,6 +568,13 @@ export const {
   useGetPageQuery,
   useUpdatePageMutation,
   useUploadFileMutation,
+  useGetCmsPagesQuery,
+  useGetCmsPageQuery,
+  useGetFeaturedMediaQuery,
+  useGetMediaLibraryQuery,
+  useUploadMediaAssetMutation,
+  useUpdateMediaAssetMutation,
+  useDeleteMediaAssetMutation,
   useGetInstagramPostsQuery,
   useGetInstagramPostsAdminQuery,
   useUpdateInstagramPostMutation,

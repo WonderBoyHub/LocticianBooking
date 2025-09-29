@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Star,
   CheckCircle,
@@ -14,8 +15,8 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
-import { useGetInstagramPostsQuery } from '../../store/api';
-import type { InstagramPost } from '../../types';
+import { useGetInstagramPostsQuery, useGetFeaturedMediaQuery } from '../../store/api';
+import type { InstagramPost, MediaAsset } from '../../types';
 import { mapInstagramPostDto } from '../../utils/instagram';
 
 interface TestimonialProps {
@@ -96,11 +97,17 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const {
     data: instagramResponse,
     isLoading: instagramLoading,
     isError: instagramError
   } = useGetInstagramPostsQuery({ limit: 9 });
+  const {
+    data: mediaResponse,
+    isLoading: mediaLoading,
+    isError: mediaError
+  } = useGetFeaturedMediaQuery(6);
 
   const instagramPosts = React.useMemo<InstagramPost[]>(() => {
     if (!instagramResponse?.data) {
@@ -109,6 +116,8 @@ export const LandingPage: React.FC = () => {
 
     return instagramResponse.data.map(mapInstagramPostDto).slice(0, 9);
   }, [instagramResponse]);
+
+  const mediaItems = React.useMemo<MediaAsset[]>(() => mediaResponse ?? [], [mediaResponse]);
 
   const testimonials = [
     {
@@ -241,7 +250,7 @@ export const LandingPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  onClick={() => navigate('/services')}
+                  onClick={() => navigate('/tjenester')}
                 >
                   Se Tjenester
                 </Button>
@@ -318,7 +327,7 @@ export const LandingPage: React.FC = () => {
             <Button
               variant="outline"
               size="lg"
-              onClick={() => navigate('/services')}
+              onClick={() => navigate('/tjenester')}
               rightIcon={<ArrowRight className="h-5 w-5" />}
             >
               Se Alle Tjenester
@@ -516,6 +525,79 @@ export const LandingPage: React.FC = () => {
           ) : (
             <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
               Ingen Instagram-opslag er fremhævet endnu. Tjek igen senere for nye transformationer.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Media Spotlight Section */}
+      <section className="section-padding bg-brand-light">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12 text-center"
+          >
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-dark mb-4">
+              {t('landing.media.title')}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {t('landing.media.subtitle')}
+            </p>
+          </motion.div>
+
+          {mediaLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="aspect-square rounded-xl bg-white border border-brown-100 shadow-soft animate-pulse"
+                />
+              ))}
+            </div>
+          ) : mediaError ? (
+            <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
+              {t('landing.media.error')}
+            </div>
+          ) : mediaItems.length ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {mediaItems.map((item) => (
+                <motion.figure
+                  key={item.id}
+                  className="relative overflow-hidden rounded-xl shadow-soft border border-brown-100 bg-white"
+                  whileHover={{ scale: 1.01 }}
+                >
+                  {item.mimeType.startsWith('video/') ? (
+                    <video
+                      src={item.url}
+                      controls
+                      className="w-full h-72 object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.altText ?? item.originalFilename}
+                      className="w-full h-72 object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  {item.caption ? (
+                    <figcaption className="p-3 text-sm text-gray-700 bg-white/90">
+                      {item.caption}
+                    </figcaption>
+                  ) : null}
+                </motion.figure>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
+              {t('landing.media.empty')}
             </div>
           )}
         </div>

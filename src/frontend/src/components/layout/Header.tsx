@@ -12,6 +12,7 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@components/ui/Button';
 import clsx from 'clsx';
 
@@ -32,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -50,11 +52,14 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const navigationItems = [
-    { href: '/', label: 'Hjem', labelEn: 'Home' },
-    { href: '/services', label: 'Tjenester', labelEn: 'Services' },
-    { href: '/contact', label: 'Kontakt', labelEn: 'Contact' },
-  ];
+  const navigationItems = React.useMemo<Array<{ href: string; labelKey: string }>>(
+    () => [
+      { href: '/', labelKey: 'navigation.home' },
+      { href: '/tjenester', labelKey: 'navigation.services' },
+      { href: '/contact', labelKey: 'navigation.contact' },
+    ],
+    []
+  );
 
   const userMenuItems = [
     {
@@ -90,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
           <Link
             to="/"
             className="flex items-center space-x-2"
-            aria-label="Just Locc It - Hjem"
+            aria-label={`Just Locc It - ${t('navigation.home')}`}
           >
             <div className="w-10 h-10 bg-brand-primary rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-lg">JLI</span>
@@ -108,10 +113,14 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
                 to={item.href}
                 className={clsx(
                   'text-brand-dark hover:text-brand-primary transition-colors duration-200 font-medium',
-                  location.pathname === item.href && 'text-brand-primary'
+                  (item.href === '/' && location.pathname === '/') ||
+                    (item.href !== '/' && location.pathname.startsWith(item.href)) ||
+                    (item.href === '/tjenester' && location.pathname.startsWith('/services/catalog'))
+                    ? 'text-brand-primary'
+                    : undefined
                 )}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </nav>
@@ -144,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
               size="sm"
               className="hidden sm:inline-flex"
             >
-              Book Nu
+              {t('navigation.booking')}
             </Button>
 
             {/* User Menu or Auth Buttons */}
@@ -256,7 +265,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
                       location.pathname === item.href && 'bg-brand-accent text-brand-primary'
                     )}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 ))}
               </nav>
@@ -264,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
               {/* Mobile Book Button */}
               <div className="px-4">
                 <Button onClick={handleBookNow} fullWidth>
-                  Book Nu
+                  {t('navigation.booking')}
                 </Button>
               </div>
 
