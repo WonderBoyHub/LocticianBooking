@@ -1,6 +1,5 @@
-"""
-Authentication dependencies for FastAPI.
-"""
+"""Authentication dependencies for FastAPI."""
+import json
 from typing import Optional
 
 import structlog
@@ -76,6 +75,33 @@ async def get_current_user(
             "SELECT set_config('app.current_user_id', :user_id, true)",
             {"user_id": user_id}
         )
+
+        # Provide JWT metadata for Neon RLS policies
+        try:
+            await db.execute(
+                "SELECT set_config('request.jwt.token', :token, true)",
+                {"token": credentials.credentials},
+            )
+            await db.execute(
+                "SELECT set_config('request.jwt.claims', :claims, true)",
+                {"claims": json.dumps(payload)},
+            )
+            await db.execute(
+                "SELECT set_config('request.jwt.claim.sub', :sub, true)",
+                {"sub": user_id},
+            )
+            role_value = payload.get("role")
+            if isinstance(role_value, str):
+                await db.execute(
+                    "SELECT set_config('request.jwt.claim.role', :role, true)",
+                    {"role": role_value},
+                )
+        except Exception as claims_error:
+            logger.warning(
+                "Failed to propagate JWT claims to PostgreSQL",
+                error=str(claims_error),
+                user_id=user_id,
+            )
 
         return user
 

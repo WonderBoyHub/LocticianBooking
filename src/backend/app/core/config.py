@@ -1,10 +1,9 @@
-"""
-Configuration settings for the Loctician Booking System API.
-"""
+"""Configuration settings for the Loctician Booking System API."""
 from functools import lru_cache
+from pathlib import Path
 from typing import List, Optional, Union
 
-from pydantic import Field, validator, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -30,6 +29,18 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = Field(..., min_length=32, description="Secret key for JWT tokens")
     ALGORITHM: str = "HS256"
+    JWT_PRIVATE_KEY: Optional[str] = Field(
+        default=None,
+        description="PEM encoded private key used for signing JWTs",
+    )
+    JWT_PUBLIC_KEY: Optional[str] = Field(
+        default=None,
+        description="PEM encoded public key exposed via JWKS",
+    )
+    JWT_KEY_ID: Optional[str] = Field(
+        default="loctician-booking-key",
+        description="Key identifier included in JWT headers and JWKS documents",
+    )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     SESSION_SECURE_COOKIES: bool = False
@@ -49,6 +60,37 @@ class Settings(BaseSettings):
             else:
                 return [self.BACKEND_CORS_ORIGINS.strip()]
         return self.BACKEND_CORS_ORIGINS
+
+    @field_validator("JWT_PRIVATE_KEY", "JWT_PUBLIC_KEY", mode="before")
+    @classmethod
+    def load_key_material(cls, value: Optional[str]):
+        """Allow providing PEM material directly or via file path."""
+        if not value:
+            return value
+
+        value = str(value).strip()
+
+        if not value:
+            return None
+
+        # Replace escaped newlines to support .env storage
+        normalized_value = value.replace("\\n", "\n")
+
+        if "-----BEGIN" in normalized_value:
+            return normalized_value
+
+        potential_path = Path(normalized_value)
+        if potential_path.exists():
+            return potential_path.read_text().strip()
+
+        return normalized_value
+
+    @property
+    def jwt_algorithm(self) -> str:
+        """Return the effective JWT signing algorithm."""
+        if self.JWT_PRIVATE_KEY:
+            return "RS256"
+        return self.ALGORITHM or "HS256"
 
     # Email Configuration
     SMTP_HOST: str = "smtp.gmail.com"

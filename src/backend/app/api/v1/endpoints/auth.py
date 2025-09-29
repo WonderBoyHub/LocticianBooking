@@ -32,6 +32,12 @@ logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 
+@router.get("/jwks", include_in_schema=False)
+async def get_jwks_document() -> Dict[str, Any]:
+    """Expose the JWKS document for Neon RLS and other JWT verifiers."""
+    return auth_service.jwks_document()
+
+
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
 async def login(
     request: Request,
