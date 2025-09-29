@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 import aiohttp
 import sys
 
-API_BASE_URL = "http://localhost:54846"
+API_BASE_URL = "http://localhost:8000"
 FRONTEND_URL = "http://localhost:3004"
 
 class APITester:

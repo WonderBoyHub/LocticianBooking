@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import {
   format,
   startOfMonth,

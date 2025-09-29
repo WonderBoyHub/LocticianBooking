@@ -12,7 +12,7 @@ import { useCreateAppointmentMutation } from '../../store/api';
 import { addNotification } from '../../store/slices/uiSlice';
 import { Button, Card, CardContent, LoadingSpinner } from '../ui';
 import { formatDate, formatTime, formatCurrency, formatPhoneNumber } from '../../i18n';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 interface BookingSummaryProps {
   booking: any;

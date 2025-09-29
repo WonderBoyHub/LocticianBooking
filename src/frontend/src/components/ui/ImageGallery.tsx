@@ -11,7 +11,7 @@ import {
   Heart,
   MoreHorizontal,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 export interface GalleryImage {
   id: string;

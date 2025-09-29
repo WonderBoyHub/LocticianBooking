@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { Menu, Bell, Search, ChevronDown } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { selectUser } from '../../store/slices/authSlice';

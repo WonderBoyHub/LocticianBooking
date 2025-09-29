@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
   TooltipProps,
 } from 'recharts';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 interface BaseChartProps {
   data: any[];

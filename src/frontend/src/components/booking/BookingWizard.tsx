@@ -9,7 +9,7 @@ import { DateTimeSelection } from './DateTimeSelection';
 import { CustomerDetails } from './CustomerDetails';
 import { BookingConfirmation } from './BookingConfirmation';
 import { Card } from '../ui';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 
 const steps = [
   { key: 'service', label: 'booking.steps.service' },
