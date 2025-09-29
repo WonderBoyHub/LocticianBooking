@@ -15,7 +15,7 @@ import {
   Eye,
   Shield,
   ShieldCheck,
-  User,
+  User as UserIcon,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
@@ -57,7 +57,7 @@ const UserTableRow: React.FC<{
       case 'loctician':
         return <Shield className="w-4 h-4 text-blue-500" />;
       default:
-        return <User className="w-4 h-4 text-gray-500" />;
+        return <UserIcon className="w-4 h-4 text-gray-500" />;
     }
   };
 

@@ -50,7 +50,7 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
       refetchOnMount: false,
     },
     mutations: {
@@ -312,7 +312,7 @@ const App: React.FC = () => {
           </I18nextProvider>
 
           {/* Development tools */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <ReactQueryDevtools initialIsOpen={false} />
           )}
         </QueryClientProvider>

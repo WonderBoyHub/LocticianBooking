@@ -31,12 +31,14 @@ from app.models.booking import Booking
 from app.models.calendar_event import CalendarEvent
 from app.models.enums import BookingStatus, CalendarEventType
 from app.models.user import User
-from app.schemas.calendar import (
+from app.schemas.availability import (
     AvailabilitySlot,
+    ConflictResult,
+)
+from app.schemas.calendar import (
     AvailabilityCheck,
     AvailabilityResponse,
     ConflictCheck,
-    ConflictResult,
     ScheduleItem,
     ScheduleView,
     ViewType,

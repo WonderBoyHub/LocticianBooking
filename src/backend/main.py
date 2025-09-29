@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from typing import Dict
 
 import structlog
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, status, WebSocket
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
@@ -28,8 +28,9 @@ from app.api.v1.endpoints import (
     auth,
     bookings,
     users,
-    # New comprehensive endpoints
-    calendar_advanced,
+    # Consolidated and standardized endpoints
+    availability,
+    calendar,
     bookings_advanced,
     users_management,
     payments_mollie,
@@ -156,7 +157,7 @@ if not settings.DEBUG:
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[
@@ -295,9 +296,7 @@ async def readiness_check() -> Dict[str, str]:
 
         return {
             "status": "ready",
-            "checks": {
-                "database": "healthy",
-            }
+            "database": "healthy",
         }
 
     except Exception as e:
@@ -346,11 +345,18 @@ app.include_router(
     tags=["Users"],
 )
 
-# New comprehensive API routers
+# Consolidated availability management
 app.include_router(
-    calendar_advanced.router,
+    availability.router,
+    prefix=f"{settings.API_V1_PREFIX}/availability",
+    tags=["Availability Management"],
+)
+
+# Standardized calendar management
+app.include_router(
+    calendar.router,
     prefix=f"{settings.API_V1_PREFIX}/calendar",
-    tags=["Advanced Calendar"],
+    tags=["Calendar Management"],
 )
 
 app.include_router(
@@ -394,7 +400,7 @@ async def test_rate_limit(request: Request):
 
 # WebSocket endpoint placeholder
 @app.websocket("/ws")
-async def websocket_endpoint(websocket):
+async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time updates."""
     # This will be implemented in the WebSocket module
     await websocket.accept()

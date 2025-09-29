@@ -37,7 +37,7 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, color, href }) => {
   const content = (
     <motion.div
-      whileHover={{ y: -2, shadow: '0 8px 25px rgba(0,0,0,0.1)' }}
+      whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }}
       className="bg-white rounded-xl p-6 shadow-soft border border-brown-200 cursor-pointer"
     >
       <div className="flex items-center justify-between">

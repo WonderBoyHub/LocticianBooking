@@ -190,7 +190,7 @@ export const dashboardConfigSchema = z.object({
       width: z.number().int().min(1).max(12),
       height: z.number().int().min(1).max(12),
     }),
-    config: z.record(z.any()),
+    config: z.record(z.string(), z.any()),
     refresh_interval: z.number().int().min(0).default(300), // seconds
     is_visible: z.boolean().default(true),
   })).max(20, 'Maximum 20 widgets allowed'),

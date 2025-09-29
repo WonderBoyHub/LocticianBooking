@@ -3,6 +3,7 @@ import { useForm, type FieldValues, type UseFormReturn, type SubmitHandler, type
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 // Form Context
@@ -37,7 +38,7 @@ export function Form<TFieldValues extends FieldValues = FieldValues>({
   });
 
   return (
-    <FormContext.Provider value={{ form }}>
+    <FormContext.Provider value={{ form: form as UseFormReturn<FieldValues> }}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className={clsx('space-y-6', className)}

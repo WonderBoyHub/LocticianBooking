@@ -171,7 +171,8 @@ export const AdminAnalytics: React.FC = () => {
   }, [filters.period]);
 
   const { data: analyticsData, isLoading, error } = useGetAnalyticsQuery({
-    ...dateRange,
+    startDate: dateRange.start,
+    endDate: dateRange.end,
     locticianId: filters.locticianId,
   });
 
@@ -223,10 +224,10 @@ export const AdminAnalytics: React.FC = () => {
 
   // Top customers data
   const topCustomersData = React.useMemo(() => [
-    { name: 'Anna Jensen', value: '12,500 DKK', change: 15, subtitle: '8 appointments' },
-    { name: 'Michael Nielsen', value: '9,800 DKK', change: -5, subtitle: '6 appointments' },
-    { name: 'Sarah Johnson', value: '8,200 DKK', change: 25, subtitle: '5 appointments' },
-    { name: 'Lars Andersen', value: '7,100 DKK', change: 8, subtitle: '4 appointments' },
+    { name: 'Anna Jensen', value: 12500, change: 15, subtitle: '8 appointments' },
+    { name: 'Michael Nielsen', value: 9800, change: -5, subtitle: '6 appointments' },
+    { name: 'Sarah Johnson', value: 8200, change: 25, subtitle: '5 appointments' },
+    { name: 'Lars Andersen', value: 7100, change: 8, subtitle: '4 appointments' },
   ], []);
 
   if (isLoading) {
@@ -361,18 +362,15 @@ export const AdminAnalytics: React.FC = () => {
           <Chart
             type="line"
             data={revenueData}
-            config={{
-              xAxis: { dataKey: 'date' },
-              yAxis: { tickFormatter: (value: number) => `${value.toLocaleString()} DKK` },
-              series: [
-                {
-                  dataKey: 'revenue',
-                  stroke: '#3B82F6',
-                  strokeWidth: 2,
-                  name: 'Revenue',
-                },
-              ],
-            }}
+            xDataKey="date"
+            lines={[
+              {
+                dataKey: 'revenue',
+                stroke: '#3B82F6',
+                strokeWidth: 2,
+                name: 'Revenue',
+              },
+            ]}
             height={300}
           />
         </Card>
@@ -385,14 +383,13 @@ export const AdminAnalytics: React.FC = () => {
             </h3>
           </div>
           <Chart
-            type="doughnut"
+            type="pie"
             data={appointmentStatusData}
-            config={{
-              dataKey: 'value',
-              nameKey: 'name',
-              colors: appointmentStatusData.map(item => item.color),
-            }}
+            dataKey="value"
+            nameKey="name"
+            colors={appointmentStatusData.map(item => item.color)}
             height={300}
+            innerRadius={50}
           />
         </Card>
       </div>
@@ -410,17 +407,14 @@ export const AdminAnalytics: React.FC = () => {
         <Chart
           type="bar"
           data={servicePerformanceData}
-          config={{
-            xAxis: { dataKey: 'service' },
-            yAxis: { tickFormatter: (value: number) => `${value.toLocaleString()} DKK` },
-            series: [
-              {
-                dataKey: 'revenue',
-                fill: '#3B82F6',
-                name: 'Revenue',
-              },
-            ],
-          }}
+          xDataKey="service"
+          bars={[
+            {
+              dataKey: 'revenue',
+              fill: '#3B82F6',
+              name: 'Revenue',
+            },
+          ]}
           height={300}
         />
       </Card>

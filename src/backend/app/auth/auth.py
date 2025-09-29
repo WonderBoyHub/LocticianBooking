@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
-import logging
+import structlog
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.enums import UserRole, UserStatus
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

@@ -166,26 +166,53 @@ class MollieService:
     async def create_payment(
         self,
         payment_data: MolliePaymentCreate,
-        idempotency_key: Optional[str] = None
+        idempotency_key: Optional[str] = None,
+        danish_optimization: bool = True
     ) -> MolliePaymentResponse:
-        """Create a new payment with Mollie."""
+        """Create a new payment with Mollie with Danish optimization."""
         try:
             # Add idempotency header if provided
             headers = self.headers.copy()
             if idempotency_key:
                 headers["Idempotency-Key"] = idempotency_key
 
+            # Enhanced payment data for Danish optimization
+            payment_dict = payment_data.model_dump(exclude_none=True)
+
+            if danish_optimization:
+                # Set Danish locale if not specified
+                if not payment_dict.get('locale'):
+                    payment_dict['locale'] = 'da_DK'
+
+                # Optimize payment methods for Danish customers
+                if not payment_dict.get('method') and payment_data.amount.currency == 'DKK':
+                    amount_decimal = Decimal(payment_data.amount.value)
+                    danish_methods = await self._get_recommended_danish_methods(amount_decimal)
+                    payment_dict['method'] = danish_methods
+
+                # Add Danish description enhancement
+                description = payment_dict.get('description', '')
+                if not any(danish_word in description.lower() for danish_word in ['betaling', 'booking', 'abonnement']):
+                    if 'booking' in payment_dict.get('metadata', {}).get('payment_type', ''):
+                        payment_dict['description'] = f"Booking betaling - {description}"
+                    elif 'subscription' in payment_dict.get('metadata', {}).get('payment_type', ''):
+                        payment_dict['description'] = f"Abonnementsbetaling - {description}"
+                    else:
+                        payment_dict['description'] = f"Betaling - {description}"
+
             logger.info(
                 "Creating Mollie payment",
                 amount=payment_data.amount.value,
                 currency=payment_data.amount.currency,
-                description=payment_data.description[:50] + "..." if len(payment_data.description) > 50 else payment_data.description
+                description=payment_dict['description'][:50] + "..." if len(payment_dict['description']) > 50 else payment_dict['description'],
+                methods=payment_dict.get('method', []),
+                danish_optimization=danish_optimization
             )
 
             response_data = await self._make_request(
                 method="POST",
                 endpoint="payments",
-                data=payment_data.model_dump(exclude_none=True)
+                data=payment_dict
             )
 
             payment_response = MolliePaymentResponse(**response_data)
@@ -525,9 +552,9 @@ class MollieService:
             logger.error("Failed to retrieve Mollie refund", refund_id=refund_id, error=str(e))
             raise MollieServiceError(f"Refund retrieval failed: {str(e)}")
 
-    # Webhook Validation
-    def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """Verify Mollie webhook signature."""
+    # Enhanced Webhook Validation
+    def verify_webhook_signature(self, payload: bytes, signature: str, timestamp: Optional[str] = None) -> bool:
+        """Verify Mollie webhook signature with enhanced security."""
         if not self.webhook_secret:
             logger.warning("No webhook secret configured, skipping signature verification")
             return True
@@ -537,6 +564,21 @@ class MollieService:
             return False
 
         try:
+            # Timestamp validation for replay attack prevention
+            if timestamp:
+                try:
+                    webhook_time = int(timestamp)
+                    current_time = int(datetime.utcnow().timestamp())
+                    time_diff = abs(current_time - webhook_time)
+
+                    # Reject webhooks older than 5 minutes
+                    if time_diff > 300:
+                        logger.warning("Webhook timestamp too old", time_diff=time_diff)
+                        return False
+                except (ValueError, TypeError):
+                    logger.warning("Invalid webhook timestamp format")
+                    return False
+
             expected_signature = hmac.new(
                 self.webhook_secret.encode('utf-8'),
                 payload,
@@ -549,12 +591,84 @@ class MollieService:
             is_valid = hmac.compare_digest(signature, expected_signature)
 
             if not is_valid:
-                logger.warning("Webhook signature verification failed")
+                logger.warning("Webhook signature verification failed",
+                             signature_length=len(signature),
+                             expected_length=len(expected_signature))
 
+            logger.info("Webhook signature verified", is_valid=is_valid, has_timestamp=bool(timestamp))
             return is_valid
 
         except Exception as e:
             logger.error("Error verifying webhook signature", error=str(e))
+            return False
+
+    def validate_payment_amount(self, amount: Decimal, currency: str = "DKK") -> bool:
+        """Validate payment amount for Danish regulations and fraud prevention."""
+        try:
+            # Basic amount validation
+            if amount <= 0:
+                logger.warning("Invalid payment amount: must be positive", amount=amount)
+                return False
+
+            # Danish payment limits
+            if currency == "DKK":
+                # Minimum amount (1 DKK)
+                if amount < Decimal('1.00'):
+                    logger.warning("Payment amount below minimum", amount=amount, minimum="1.00 DKK")
+                    return False
+
+                # Maximum single payment (50,000 DKK for fraud prevention)
+                if amount > Decimal('50000.00'):
+                    logger.warning("Payment amount exceeds maximum", amount=amount, maximum="50000.00 DKK")
+                    return False
+
+                # Check for suspicious round numbers (potential fraud)
+                if amount >= Decimal('1000.00') and amount % Decimal('1000.00') == 0:
+                    logger.info("Large round payment amount detected", amount=amount)
+                    # Log but don't reject - might be legitimate
+
+            return True
+
+        except Exception as e:
+            logger.error("Error validating payment amount", error=str(e))
+            return False
+
+    def validate_customer_data(self, customer_email: str, customer_name: Optional[str] = None) -> bool:
+        """Validate customer data for Danish compliance."""
+        try:
+            # Email validation
+            if not customer_email or '@' not in customer_email:
+                logger.warning("Invalid customer email format", email=customer_email)
+                return False
+
+            # Basic email format validation
+            email_parts = customer_email.split('@')
+            if len(email_parts) != 2 or not email_parts[0] or not email_parts[1]:
+                logger.warning("Invalid email structure", email=customer_email)
+                return False
+
+            # Domain validation (basic)
+            domain = email_parts[1]
+            if '.' not in domain or len(domain) < 3:
+                logger.warning("Invalid email domain", domain=domain)
+                return False
+
+            # Name validation (if provided)
+            if customer_name:
+                if len(customer_name.strip()) < 2:
+                    logger.warning("Customer name too short", name=customer_name)
+                    return False
+
+                # Check for suspicious characters
+                import re
+                if not re.match(r'^[a-zA-ZæøåÆØÅ\s\-\.\']+$', customer_name):
+                    logger.warning("Customer name contains invalid characters", name=customer_name)
+                    return False
+
+            return True
+
+        except Exception as e:
+            logger.error("Error validating customer data", error=str(e))
             return False
 
     # Utility Methods
@@ -581,12 +695,15 @@ class MollieService:
         return None
 
     async def list_payment_methods(self, amount: Optional[MollieAmount] = None) -> List[Dict[str, Any]]:
-        """List available payment methods."""
+        """List available payment methods with Danish support."""
         try:
             params = {}
             if amount:
                 params['amount[value]'] = amount.value
                 params['amount[currency]'] = amount.currency
+
+            # Add locale for Danish payment methods
+            params['locale'] = 'da_DK'
 
             response_data = await self._make_request(
                 method="GET",
@@ -594,11 +711,121 @@ class MollieService:
                 params=params
             )
 
-            return response_data.get('_embedded', {}).get('methods', [])
+            methods = response_data.get('_embedded', {}).get('methods', [])
+
+            # Enhance methods with Danish information
+            enhanced_methods = []
+            for method in methods:
+                method_info = method.copy()
+
+                # Add Danish translations and preferences
+                if method['id'] == 'mobilepay':
+                    method_info['displayName'] = 'MobilePay'
+                    method_info['description'] = 'Danmarks mest populære mobile betalingsløsning'
+                    method_info['priority'] = 1
+                elif method['id'] == 'creditcard':
+                    method_info['displayName'] = 'Dankort/Kreditkort'
+                    method_info['description'] = 'Visa, Mastercard, Dankort'
+                    method_info['priority'] = 2
+                elif method['id'] == 'applepay':
+                    method_info['displayName'] = 'Apple Pay'
+                    method_info['description'] = 'Betal med Apple Pay'
+                    method_info['priority'] = 3
+                elif method['id'] == 'klarna':
+                    method_info['displayName'] = 'Klarna'
+                    method_info['description'] = 'Køb nu, betal senere'
+                    method_info['priority'] = 4
+                else:
+                    method_info['priority'] = 10
+
+                enhanced_methods.append(method_info)
+
+            # Sort by priority (MobilePay first for Danish customers)
+            enhanced_methods.sort(key=lambda x: x.get('priority', 10))
+
+            return enhanced_methods
 
         except Exception as e:
             logger.error("Failed to list payment methods", error=str(e))
             raise MollieServiceError(f"Payment methods retrieval failed: {str(e)}")
+
+    async def get_danish_payment_methods(self, amount: Optional[Decimal] = None) -> List[Dict[str, Any]]:
+        """Get Danish-optimized payment methods."""
+        try:
+            mollie_amount = None
+            if amount:
+                mollie_amount = self.create_amount(amount, "DKK")
+
+            methods = await self.list_payment_methods(mollie_amount)
+
+            # Filter and enhance for Danish market
+            danish_methods = []
+            preferred_methods = ['mobilepay', 'creditcard', 'applepay', 'klarna']
+
+            for method_id in preferred_methods:
+                method_data = next((m for m in methods if m['id'] == method_id), None)
+                if method_data:
+                    danish_methods.append(method_data)
+
+            # Add remaining methods
+            for method in methods:
+                if method['id'] not in preferred_methods:
+                    danish_methods.append(method)
+
+            logger.info("Retrieved Danish payment methods", count=len(danish_methods))
+            return danish_methods
+
+        except Exception as e:
+            logger.error("Failed to get Danish payment methods", error=str(e))
+            raise MollieServiceError(f"Danish payment methods retrieval failed: {str(e)}")
+
+    async def _get_recommended_danish_methods(self, amount: Decimal) -> List[str]:
+        """Get recommended payment methods for Danish customers based on amount."""
+        recommended = []
+
+        try:
+            # Always recommend MobilePay for Danish customers within reasonable limits
+            if Decimal('1.00') <= amount <= Decimal('50000.00'):
+                recommended.append('mobilepay')
+
+            # Credit cards are universally accepted
+            if amount >= Decimal('1.00'):
+                recommended.append('creditcard')
+
+            # Apple Pay for convenience (popular in Denmark)
+            if amount <= Decimal('10000.00'):
+                recommended.append('applepay')
+
+            # Klarna for larger amounts (buy now, pay later)
+            if Decimal('100.00') <= amount <= Decimal('10000.00'):
+                recommended.append('klarna')
+
+            # Bank transfer for larger amounts
+            if amount >= Decimal('1000.00'):
+                recommended.append('banktransfer')
+
+            logger.debug("Recommended Danish payment methods", amount=amount, methods=recommended)
+            return recommended[:4]  # Limit to top 4 methods
+
+        except Exception as e:
+            logger.error("Failed to get recommended Danish methods", error=str(e))
+            # Fallback to basic methods
+            return ['creditcard', 'mobilepay']
+
+    def get_danish_status_message(self, status: str) -> str:
+        """Get Danish status message for payment status."""
+        status_messages = {
+            'open': 'Betaling åben - venter på kunde',
+            'pending': 'Betaling ventende',
+            'authorized': 'Betaling autoriseret',
+            'paid': 'Betaling gennemført',
+            'canceled': 'Betaling annulleret',
+            'expired': 'Betaling udløbet',
+            'failed': 'Betaling fejlede',
+            'shipping': 'Under levering',
+            'completed': 'Fuldført'
+        }
+        return status_messages.get(status, f"Status: {status}")
 
     async def get_organization(self) -> Dict[str, Any]:
         """Get organization details (for verification)."""
@@ -627,22 +854,26 @@ async def create_payment_for_booking(
     customer_email: str,
     redirect_url: str,
     webhook_url: str,
-    currency: str = "DKK"
+    currency: str = "DKK",
+    danish_optimization: bool = True
 ) -> MolliePaymentResponse:
-    """Create a payment for a booking."""
+    """Create a payment for a booking with Danish optimization."""
     payment_data = MolliePaymentCreate(
         amount=mollie_service.create_amount(amount, currency),
         description=description,
         redirectUrl=redirect_url,
         webhookUrl=webhook_url,
+        locale='da_DK' if danish_optimization else None,
         metadata={
             "booking_id": booking_id,
             "customer_email": customer_email,
-            "payment_type": "booking"
+            "payment_type": "booking",
+            "country": "DK" if danish_optimization else None,
+            "language": "da" if danish_optimization else None
         }
     )
 
-    return await mollie_service.create_payment(payment_data)
+    return await mollie_service.create_payment(payment_data, danish_optimization=danish_optimization)
 
 
 async def create_subscription_payment(

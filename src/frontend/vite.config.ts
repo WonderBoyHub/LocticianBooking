@@ -7,13 +7,6 @@ export default defineConfig({
     react({
       // Enable React Fast Refresh
       fastRefresh: true,
-      // Babel config for production optimizations
-      babel: {
-        plugins: [
-          // Remove console.log in production
-          process.env.NODE_ENV === 'production' && ['babel-plugin-transform-remove-console'],
-        ].filter(Boolean),
-      },
     }),
   ],
   resolve: {
@@ -49,13 +42,7 @@ export default defineConfig({
     // Increase chunk size warning limit
     chunkSizeWarningLimit: 1000,
     // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: process.env.NODE_ENV === 'production',
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild',
   },
   test: {
     globals: true,

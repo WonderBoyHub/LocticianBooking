@@ -22,7 +22,7 @@ export const searchSchema = z.object({
     .string()
     .max(100, 'Search query must be less than 100 characters')
     .optional(),
-  filters: z.record(z.any()).optional(),
+  filters: z.record(z.string(), z.any()).optional(),
 }).merge(paginationSchema);
 
 // File upload schema
@@ -85,7 +85,12 @@ export const newsletterSchema = z.object({
     newServices: z.boolean().default(true),
     tips: z.boolean().default(false),
     events: z.boolean().default(false),
-  }).default({}),
+  }).default({
+    promotions: true,
+    newServices: true,
+    tips: false,
+    events: false,
+  }),
   language: z.enum(['da', 'en']).default('da'),
 });
 

@@ -13,13 +13,14 @@ import {
   Phone,
   Calendar,
   Shield,
-  User,
+  User as UserIcon,
   Crown,
   Download,
   Upload,
   X
 } from 'lucide-react';
 import { z } from 'zod';
+import type { User } from '../../types';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import {
   selectUsers,
@@ -72,9 +73,9 @@ const UserTable: React.FC<UserTableProps> = ({
       case 'loctician':
         return Shield;
       case 'customer':
-        return User;
+        return UserIcon;
       default:
-        return User;
+        return UserIcon;
     }
   };
 
@@ -228,7 +229,7 @@ export const UserManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
 
   // Mock users data
-  const mockUsers = [
+  const mockUsers: User[] = [
     {
       id: '1',
       name: 'Maria Jensen',

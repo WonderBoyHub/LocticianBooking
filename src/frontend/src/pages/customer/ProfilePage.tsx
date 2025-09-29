@@ -177,15 +177,16 @@ const ProfilePage: React.FC = () => {
   ) => {
     if (!formData) return;
 
+    const currentSectionData = formData.preferences?.[section as keyof UserPreferences] || {};
     setFormData({
       ...formData,
       preferences: {
         ...formData.preferences,
         [section]: {
-          ...formData.preferences[section],
+          ...(typeof currentSectionData === 'object' ? currentSectionData : {}),
           [field]: value,
         },
-      },
+      } as UserPreferences,
     });
   };
 

@@ -313,18 +313,15 @@ export const AdminOverview: React.FC = () => {
           <Chart
             type="line"
             data={revenueChartData}
-            config={{
-              xAxis: { dataKey: 'date' },
-              yAxis: { tickFormatter: (value: number) => `${value.toLocaleString()} DKK` },
-              series: [
-                {
-                  dataKey: 'revenue',
-                  stroke: '#3B82F6',
-                  strokeWidth: 2,
-                  fill: 'url(#gradient)',
-                },
-              ],
-            }}
+            xDataKey="date"
+            lines={[
+              {
+                dataKey: 'revenue',
+                stroke: '#3B82F6',
+                strokeWidth: 2,
+                name: 'Revenue',
+              },
+            ]}
             height={300}
           />
         </Card>
@@ -339,11 +336,9 @@ export const AdminOverview: React.FC = () => {
           <Chart
             type="pie"
             data={appointmentStatusData}
-            config={{
-              dataKey: 'value',
-              nameKey: 'name',
-              colors: appointmentStatusData.map(item => item.color),
-            }}
+            dataKey="value"
+            nameKey="name"
+            colors={appointmentStatusData.map(item => item.color)}
             height={300}
           />
         </Card>

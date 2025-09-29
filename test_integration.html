@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loctician Booking System - Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Loctician Booking System - Integration Test</h1>
+
+    <div id="results"></div>
+
+    <h2>Test Controls</h2>
+    <button onclick="testBackendHealth()">Test Backend Health</button>
+    <button onclick="testFrontendBackendConnection()">Test Frontend-Backend Connection</button>
+    <button onclick="testRegistration()">Test Registration</button>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:54846';
+        const results = document.getElementById('results');
+
+        function addResult(title, status, message, data = null) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `
+                <h3>${title}</h3>
+                <p>${message}</p>
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            results.innerHTML = '';
+        }
+
+        async function testBackendHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    addResult('Backend Health Check', 'success', 'Backend is healthy', data);
+                } else {
+                    addResult('Backend Health Check', 'error', `Health check failed: ${response.status}`, data);
+                }
+            } catch (error) {
+                addResult('Backend Health Check', 'error', `Failed to connect to backend: ${error.message}`);
+            }
+        }
+
+        async function testFrontendBackendConnection() {
+            try {
+                // Test CORS by making a request with credentials
+                const response = await fetch(`${API_BASE_URL}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addResult('Frontend-Backend Connection', 'success', 'CORS and connection working', data);
+                } else {
+                    addResult('Frontend-Backend Connection', 'error', `Connection failed: ${response.status}`, data);
+                }
+            } catch (error) {
+                addResult('Frontend-Backend Connection', 'error', `Connection test failed: ${error.message}`);
+            }
+        }
+
+        async function testRegistration() {
+            try {
+                const testUser = {
+                    email: `test_${Date.now()}@example.com`,
+                    password: 'Password123#',
+                    confirm_password: 'Password123#',
+                    first_name: 'Test',
+                    last_name: 'User',
+                    phone: '+45 12345678',
+                    gdpr_consent: true
+                };
+
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+
+                const data = await response.json();
+
+                if (response.ok || response.status === 201) {
+                    addResult('User Registration', 'success', 'Registration successful', data);
+                } else if (response.status === 400 && data.message && data.message.includes('already exists')) {
+                    addResult('User Registration', 'warning', 'User already exists (this is expected)', data);
+                } else {
+                    addResult('User Registration', 'error', `Registration failed: ${response.status}`, data);
+                }
+            } catch (error) {
+                addResult('User Registration', 'error', `Registration test failed: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const loginData = {
+                    email: 'test@example.com',
+                    password: 'Password123#'
+                };
+
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    addResult('User Login', 'success', 'Login successful', data);
+
+                    // Store token for further tests
+                    if (data.access_token) {
+                        localStorage.setItem('test_token', data.access_token);
+                    }
+                } else {
+                    addResult('User Login', 'error', `Login failed: ${response.status}`, data);
+                }
+            } catch (error) {
+                addResult('User Login', 'error', `Login test failed: ${error.message}`);
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('Test Suite', 'warning', 'Starting integration tests...');
+
+            await testBackendHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testFrontendBackendConnection();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testRegistration();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testLogin();
+
+            addResult('Test Suite', 'success', 'All tests completed!');
+        }
+
+        // Run basic tests on page load
+        window.onload = function() {
+            addResult('Integration Test Page', 'success', 'Integration test page loaded successfully');
+            testBackendHealth();
+        };
+    </script>
+</body>
+</html>

@@ -105,7 +105,7 @@ const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
   </div>
 );
 
-const CustomTooltip: React.FC<TooltipProps<any, any> & { colors?: string[] }> = ({
+const CustomTooltip: React.FC<any> = ({
   active,
   payload,
   label,

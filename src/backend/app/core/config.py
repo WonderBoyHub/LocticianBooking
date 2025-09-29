@@ -2,9 +2,9 @@
 Configuration settings for the Loctician Booking System API.
 """
 from functools import lru_cache
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from pydantic import Field, validator
+from pydantic import Field, validator, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -38,15 +38,17 @@ class Settings(BaseSettings):
     CSRF_PROTECTION_ENABLED: bool = True
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3001"]
+    BACKEND_CORS_ORIGINS: str = "http://localhost:3001"
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Convert CORS origins string to list."""
+        if isinstance(self.BACKEND_CORS_ORIGINS, str):
+            if "," in self.BACKEND_CORS_ORIGINS:
+                return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",")]
+            else:
+                return [self.BACKEND_CORS_ORIGINS.strip()]
+        return self.BACKEND_CORS_ORIGINS
 
     # Email Configuration
     SMTP_HOST: str = "smtp.gmail.com"

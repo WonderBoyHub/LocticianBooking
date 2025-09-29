@@ -222,7 +222,7 @@ class MollieSetupValidator:
         print("🔍 Validating security settings...")
 
         # Check if using HTTPS in production
-        cors_origins = getattr(settings, 'BACKEND_CORS_ORIGINS', [])
+        cors_origins = getattr(settings, 'cors_origins_list', [])
         if cors_origins:
             for origin in cors_origins:
                 if origin.startswith('https://'):

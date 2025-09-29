@@ -21,7 +21,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'da', // Default to Danish
-    debug: process.env.NODE_ENV === 'development',
+    debug: import.meta.env.DEV,
 
     // Language detection options
     detection: {

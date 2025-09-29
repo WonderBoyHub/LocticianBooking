@@ -286,7 +286,7 @@ const AppointmentsPage: React.FC = () => {
 
   const [filters, setFilters] = useState<AppointmentFilters>({
     status: (searchParams.get('status') as AppointmentStatus) || 'all',
-    dateRange: searchParams.get('dateRange') || 'all',
+    dateRange: (searchParams.get('dateRange') as 'all' | 'upcoming' | 'past' | 'this_week' | 'this_month' | 'custom') || 'all',
     search: searchParams.get('search') || '',
     startDate: searchParams.get('startDate') || undefined,
     endDate: searchParams.get('endDate') || undefined,

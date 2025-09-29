@@ -104,11 +104,14 @@ export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   fallbackComponent?: React.ComponentType<{ error: Error; retry: () => void }>
 ) => {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary fallback={fallbackComponent && <fallbackComponent error={new Error()} retry={() => {}} />}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
+  const WrappedComponent = (props: P) => {
+    const FallbackComponent = fallbackComponent;
+    return (
+      <ErrorBoundary fallback={FallbackComponent && <FallbackComponent error={new Error()} retry={() => {}} />}>
+        <Component {...props} />
+      </ErrorBoundary>
+    );
+  };
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
 

@@ -71,8 +71,23 @@ async def create_payment_intent(
     db: AsyncSession = Depends(get_db),
     _: None = Depends(rate_limit_check),
 ) -> PaymentIntent:
-    """Create payment intent for booking or subscription using Mollie."""
+    """Create payment intent for booking or subscription using Mollie with enhanced validation."""
     try:
+        # Enhanced payment validation
+        if not mollie_service.validate_payment_amount(payment_data.amount, payment_data.currency):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid payment amount"
+            )
+
+        # Validate customer data
+        customer_name = f"{current_user.first_name} {current_user.last_name}".strip()
+        if not mollie_service.validate_customer_data(current_user.email, customer_name):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid customer data"
+            )
+
         # Validate booking if provided
         booking = None
         if payment_data.booking_id:
@@ -765,16 +780,19 @@ async def cancel_subscription(
 async def handle_mollie_webhook(
     request: Request,
     mollie_signature: str = Header(None, alias="mollie-signature"),
+    mollie_timestamp: Optional[str] = Header(None, alias="mollie-timestamp"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle Mollie payment webhooks."""
+    """Handle Mollie payment webhooks with enhanced security."""
     try:
         # Get raw body
         body = await request.body()
 
-        # Verify webhook signature
-        if not mollie_service.verify_webhook_signature(body, mollie_signature):
-            logger.warning("Invalid webhook signature received")
+        # Enhanced webhook signature verification with timestamp
+        if not mollie_service.verify_webhook_signature(body, mollie_signature, mollie_timestamp):
+            logger.warning("Invalid webhook signature received",
+                         has_signature=bool(mollie_signature),
+                         has_timestamp=bool(mollie_timestamp))
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid webhook signature"
@@ -1018,22 +1036,27 @@ async def create_refund(
 async def list_payment_methods(
     amount: Optional[Decimal] = Query(None, description="Filter by minimum amount"),
     currency: str = Query("DKK", description="Currency code"),
+    danish_optimized: bool = Query(True, description="Optimize for Danish customers"),
 ) -> List[Dict[str, Any]]:
-    """List available payment methods from Mollie."""
+    """List available payment methods from Mollie with Danish optimization."""
     try:
-        mollie_amount = None
-        if amount:
-            mollie_amount = mollie_service.create_amount(amount, currency)
-
-        methods = await mollie_service.list_payment_methods(mollie_amount)
+        if danish_optimized:
+            methods = await mollie_service.get_danish_payment_methods(amount)
+        else:
+            mollie_amount = None
+            if amount:
+                mollie_amount = mollie_service.create_amount(amount, currency)
+            methods = await mollie_service.list_payment_methods(mollie_amount)
 
         return [
             {
                 "id": method.get("id"),
+                "displayName": method.get("displayName", method.get("description")),
                 "description": method.get("description"),
                 "image": method.get("image", {}).get("size1x", ""),
                 "minimumAmount": method.get("minimumAmount"),
                 "maximumAmount": method.get("maximumAmount"),
+                "priority": method.get("priority", 10),
                 "pricing": method.get("pricing", [])
             }
             for method in methods
@@ -1044,6 +1067,37 @@ async def list_payment_methods(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list payment methods"
+        )
+
+
+@router.get("/payment-methods/danish", response_model=List[Dict[str, Any]])
+async def list_danish_payment_methods(
+    amount: Optional[Decimal] = Query(None, description="Filter by amount"),
+) -> List[Dict[str, Any]]:
+    """List Danish-optimized payment methods with MobilePay priority."""
+    try:
+        methods = await mollie_service.get_danish_payment_methods(amount)
+
+        return [
+            {
+                "id": method.get("id"),
+                "displayName": method.get("displayName", method.get("description")),
+                "description": method.get("description"),
+                "image": method.get("image", {}).get("size1x", ""),
+                "minimumAmount": method.get("minimumAmount"),
+                "maximumAmount": method.get("maximumAmount"),
+                "priority": method.get("priority", 10),
+                "recommended": method.get("priority", 10) <= 4,
+                "pricing": method.get("pricing", [])
+            }
+            for method in methods
+        ]
+
+    except Exception as e:
+        logger.error("List Danish payment methods error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list Danish payment methods"
         )
 
 

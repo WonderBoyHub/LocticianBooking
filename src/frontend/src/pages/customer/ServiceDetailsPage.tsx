@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, DollarSign, Calendar, ArrowLeft } from 'lucide-react';
 import { useGetServiceQuery } from '../../store/api';
 import { Button, Card, CardContent, LoadingSpinner, Badge } from '../../components/ui';
-import { formatCurrency } from '../../i18n';
+import { formatCurrency } from '../../i18n/index';
 
 export const ServiceDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

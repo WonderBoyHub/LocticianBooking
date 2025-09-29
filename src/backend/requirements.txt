@@ -27,3 +27,4 @@ passlib==1.7.4
 passlib-fork==1.7.4.post2
 psutil==5.9.8
 pydantic-settings==2.11.0
+mollie-api-python==3.8.0

@@ -338,18 +338,15 @@ export const StaffDashboard: React.FC = () => {
         <Chart
           type="line"
           data={performanceData}
-          config={{
-            xAxis: { dataKey: 'date' },
-            yAxis: { tickFormatter: (value: number) => `${value.toLocaleString()} DKK` },
-            series: [
-              {
-                dataKey: 'revenue',
-                stroke: '#3B82F6',
-                strokeWidth: 2,
-                name: 'Revenue',
-              },
-            ],
-          }}
+          xDataKey="date"
+          lines={[
+            {
+              dataKey: 'revenue',
+              stroke: '#3B82F6',
+              strokeWidth: 2,
+              name: 'Revenue',
+            },
+          ]}
           height={250}
         />
       </Card>

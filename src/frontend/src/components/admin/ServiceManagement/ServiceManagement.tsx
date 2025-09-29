@@ -11,7 +11,7 @@ import {
   Scissors,
   Clock,
   DollarSign,
-  Toggle,
+  ToggleLeft,
   Settings,
   Image as ImageIcon,
   Copy,
@@ -118,7 +118,7 @@ const ServiceTableRow: React.FC<{
             onClick={() => onToggleActive(service)}
             className="p-1 h-8 w-8"
           >
-            <Toggle className="w-4 h-4" />
+            <ToggleLeft className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
@@ -144,6 +144,8 @@ const ServiceEditModal: React.FC<{
 }> = ({ service, categories, isOpen, onClose, onSave, isLoading }) => {
   const { t } = useTranslation();
 
+  const isEditing = !!service;
+
   const {
     register,
     handleSubmit,
@@ -152,7 +154,7 @@ const ServiceEditModal: React.FC<{
     watch,
     setValue,
   } = useForm<ServiceCreateInput>({
-    resolver: zodResolver(service ? serviceUpdateSchema : serviceCreateSchema),
+    resolver: zodResolver(isEditing ? serviceUpdateSchema : serviceCreateSchema) as any,
     defaultValues: service ? {
       name: service.name,
       nameEn: service.nameEn,
@@ -213,7 +215,11 @@ const ServiceEditModal: React.FC<{
   }, [service, isOpen, reset]);
 
   const onSubmit = (data: ServiceCreateInput) => {
-    onSave(data);
+    if (isEditing && service) {
+      onSave({ ...data, id: service.id } as ServiceUpdateInput);
+    } else {
+      onSave(data);
+    }
   };
 
   return (

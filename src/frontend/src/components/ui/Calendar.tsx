@@ -274,7 +274,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   // Render week view
   const renderWeekView = () => {
     const weekStart = startOfWeek(currentDate);
-    const weekDays = [];
+    const weekDays: Date[] = [];
 
     for (let i = 0; i < 7; i++) {
       const day = addDays(weekStart, i);

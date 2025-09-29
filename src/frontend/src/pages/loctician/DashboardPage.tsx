@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectUser } from '../../store/slices/authSlice';
 import { setBreadcrumbs, setPageTitle } from '../../store/slices/uiSlice';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../../components/ui';
-import { formatCurrency } from '../../i18n';
+import { formatCurrency } from '../../i18n/index';
 
 const StatCard: React.FC<{
   title: string;

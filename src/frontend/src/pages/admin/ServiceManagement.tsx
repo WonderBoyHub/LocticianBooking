@@ -226,10 +226,13 @@ export const ServiceManagement: React.FC = () => {
   }, [dispatch]);
 
   const handleCreateService = (data: ServiceFormData) => {
+    const category = mockCategories.find(cat => cat.id === data.categoryId);
+    if (!category) return;
+
     const newService = {
       id: Date.now().toString(),
       ...data,
-      category: mockCategories.find(cat => cat.id === data.categoryId),
+      category,
       locticianId: 'current-user-id',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -244,10 +247,13 @@ export const ServiceManagement: React.FC = () => {
   const handleEditService = (data: ServiceFormData) => {
     if (!selectedService) return;
 
+    const category = mockCategories.find(cat => cat.id === data.categoryId);
+    if (!category) return;
+
     const updatedService = {
       ...selectedService,
       ...data,
-      category: mockCategories.find(cat => cat.id === data.categoryId),
+      category,
       updatedAt: new Date().toISOString()
     };
 
