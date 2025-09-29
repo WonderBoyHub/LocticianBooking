@@ -32,6 +32,23 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    JWT_JWKS_URL: Optional[str] = Field(
+        default=None,
+        description="Neon RLS JWKS endpoint for verifying external JWTs"
+    )
+    JWT_JWKS_CACHE_SECONDS: int = 300
+    JWT_ALLOWED_ALGORITHMS: List[str] = Field(
+        default_factory=lambda: ["RS256"],
+        description="Accepted JWT signing algorithms when using JWKS"
+    )
+    JWT_AUDIENCE: Optional[str] = Field(
+        default=None,
+        description="Expected JWT audience when validating external tokens"
+    )
+    JWT_ISSUER: Optional[str] = Field(
+        default=None,
+        description="Expected JWT issuer when validating external tokens"
+    )
     SESSION_SECURE_COOKIES: bool = False
     SESSION_HTTPONLY_COOKIES: bool = True
     SESSION_SAMESITE: str = "lax"

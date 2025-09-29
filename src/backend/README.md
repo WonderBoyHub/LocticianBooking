@@ -141,6 +141,7 @@ The application uses environment variables for configuration. See `.env.example`
 - `ACCESS_TOKEN_EXPIRE_MINUTES`: JWT token expiration (default: 30)
 - `RATE_LIMIT_PER_MINUTE`: API rate limiting (default: 60)
 - `CORS_ORIGINS`: Allowed CORS origins
+- `JWT_JWKS_URL` / `JWT_ALLOWED_ALGORITHMS` / `JWT_AUDIENCE` / `JWT_ISSUER`: Optional Neon RLS JWKS configuration
 
 #### Feature Flags
 - `ENABLE_GDPR_FEATURES`: Enable GDPR compliance endpoints
@@ -162,6 +163,13 @@ The application integrates deeply with PostgreSQL features:
 ### JWT Authentication
 
 The system uses PostgreSQL-based JWT authentication:
+
+#### Neon RLS JWKS integration
+
+- Configure the Neon Console with the **Postgres JSON Web Key Set (JWKS) URL** exposed by your database project.
+- Set the JWKS values in `.env` (`JWT_JWKS_URL`, optional audience/issuer, allowed algorithms).
+- When a JWKS URL is configured the API can validate RSA-signed tokens issued by Neon in addition to the existing symmetric tokens.
+- JWKS documents are cached locally for the duration specified by `JWT_JWKS_CACHE_SECONDS` to reduce outbound requests.
 
 ```python
 # Login request

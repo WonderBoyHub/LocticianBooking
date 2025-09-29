@@ -1,17 +1,17 @@
-"""
-Authentication utilities and JWT handling.
-"""
+"""Authentication utilities and JWT handling."""
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
 import structlog
 from fastapi import HTTPException, status
-from jose import JWTError, jwt
+from jose import JWTError, jwk, jwt
+from jose.exceptions import JWTClaimsError, JWKError
 from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.jwks import JWKSClient, JWKSClientError
 from app.core.config import settings
 from app.models.user import User
 from app.models.enums import UserRole, UserStatus
@@ -20,6 +20,19 @@ logger = structlog.get_logger(__name__)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Optional JWKS client (for Neon RLS integration)
+jwks_client: Optional[JWKSClient] = None
+if settings.JWT_JWKS_URL:
+    try:
+        jwks_client = JWKSClient(
+            settings.JWT_JWKS_URL,
+            cache_ttl_seconds=settings.JWT_JWKS_CACHE_SECONDS,
+        )
+        logger.info("JWKS client configured", jwks_url=settings.JWT_JWKS_URL)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Failed to initialise JWKS client", error=str(exc))
+        jwks_client = None
 
 
 class AuthenticationError(HTTPException):
@@ -89,20 +102,103 @@ class AuthService:
 
     @staticmethod
     def verify_token(token: str, token_type: str = "access") -> Dict[str, Any]:
-        """Verify and decode JWT token."""
+        """Verify and decode a JWT token."""
+        if jwks_client:
+            try:
+                header = jwt.get_unverified_header(token)
+                algorithm = header.get("alg")
+            except JWTError:
+                algorithm = None
+
+            if algorithm in (settings.JWT_ALLOWED_ALGORITHMS or []):
+                return AuthService._verify_with_jwks(token, token_type)
+
+        return AuthService._verify_with_secret(token, token_type)
+
+    @staticmethod
+    def _verify_with_secret(token: str, token_type: str) -> Dict[str, Any]:
+        """Verify a symmetric JWT signed with the local secret key."""
         try:
             payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+                token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM],
             )
 
-            if payload.get("type") != token_type:
+            token_claim_type = payload.get("type")
+            if token_claim_type is not None and token_claim_type != token_type:
                 raise AuthenticationError("Invalid token type")
 
             return payload
 
-        except JWTError as e:
-            logger.warning("JWT verification failed", error=str(e))
-            raise AuthenticationError("Invalid token")
+        except JWTError as exc:
+            logger.warning("JWT verification failed", error=str(exc))
+            raise AuthenticationError("Invalid token") from exc
+
+    @staticmethod
+    def _verify_with_jwks(token: str, token_type: str) -> Dict[str, Any]:
+        """Verify a JWT using the configured JWKS endpoint."""
+        if jwks_client is None:
+            raise AuthenticationError("JWKS client is not configured")
+
+        try:
+            header = jwt.get_unverified_header(token)
+        except JWTError as exc:
+            logger.warning("Unable to parse JWT header", error=str(exc))
+            raise AuthenticationError("Invalid token") from exc
+
+        kid = header.get("kid")
+        algorithm = header.get("alg")
+
+        allowed_algorithms = settings.JWT_ALLOWED_ALGORITHMS or []
+        if not algorithm:
+            if len(allowed_algorithms) == 1:
+                algorithm = allowed_algorithms[0]
+            else:
+                logger.warning("JWT missing alg header and multiple algorithms configured")
+                raise AuthenticationError("Unsupported token algorithm")
+
+        if allowed_algorithms and algorithm not in allowed_algorithms:
+            logger.warning("JWT signed with unsupported algorithm", algorithm=algorithm)
+            raise AuthenticationError("Unsupported token algorithm")
+
+        try:
+            key_data = jwks_client.get_signing_key(kid)
+        except JWKSClientError as exc:
+            logger.error("Unable to fetch signing key from JWKS", error=str(exc))
+            raise AuthenticationError("Invalid token") from exc
+
+        try:
+            public_key = jwk.construct(key_data, algorithm=algorithm)
+            pem_key = public_key.to_pem().decode("utf-8")
+        except (JWKError, ValueError) as exc:
+            logger.error("Failed to construct public key from JWKS", error=str(exc))
+            raise AuthenticationError("Invalid token") from exc
+
+        audience = settings.JWT_AUDIENCE
+        issuer = settings.JWT_ISSUER
+
+        try:
+            payload = jwt.decode(
+                token,
+                pem_key,
+                algorithms=[algorithm],
+                audience=audience if audience else None,
+                issuer=issuer if issuer else None,
+                options={"verify_aud": bool(audience)},
+            )
+        except JWTClaimsError as exc:
+            logger.warning("JWT claims validation failed", error=str(exc))
+            raise AuthenticationError("Invalid token claims") from exc
+        except JWTError as exc:
+            logger.warning("JWT verification failed", error=str(exc))
+            raise AuthenticationError("Invalid token") from exc
+
+        token_claim_type = payload.get("type")
+        if token_type and token_claim_type is not None and token_claim_type != token_type:
+            raise AuthenticationError("Invalid token type")
+
+        return payload
 
     @staticmethod
     async def authenticate_user_db(
