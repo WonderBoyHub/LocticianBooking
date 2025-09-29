@@ -68,12 +68,14 @@ class Settings(BaseSettings):
         return self.BACKEND_CORS_ORIGINS
 
     # Email Configuration
-    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_HOST: str = "smtp-relay.brevo.com"
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM: Optional[str] = None
     SMTP_FROM_NAME: str = "Loctician Booking"
+    SMTP_STARTTLS: bool = True
+    SMTP_SSL: bool = False
 
     # File Upload
     MAX_FILE_SIZE_MB: int = 10
