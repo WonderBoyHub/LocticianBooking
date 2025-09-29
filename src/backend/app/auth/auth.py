@@ -393,42 +393,110 @@ class AuthService:
         marketing_consent: bool = False,
         email_verified: bool = False
     ) -> str:
-        """Create a new user in the database and return user ID."""
+        """Create a new user in the database and return the user ID.
+
+        The production database has evolved several times and some environments
+        may still be on an older schema (for example without the inline role or
+        GDPR columns).  A raw INSERT that assumes the newest schema would fail
+        in those cases which results in a 500 error on registration.  To make
+        the registration endpoint resilient we discover the available columns at
+        runtime and only insert into the ones that actually exist, falling back
+        to the legacy role mapping when necessary.
+        """
         try:
             password_hash = AuthService.get_password_hash(password)
 
-            query = text("""
-                INSERT INTO users (
-                    email, password_hash, first_name, last_name, phone, role,
-                    email_verified, marketing_consent, gdpr_consent_date,
-                    gdpr_consent_version, country, preferred_language, timezone, status
+            # Discover available columns in the users table.  This allows the
+            # service to work with both the legacy and the current schemas.
+            columns_result = await db.execute(
+                text(
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name = 'users'
+                      AND table_schema = current_schema()
+                    """
                 )
-                VALUES (
-                    :email, :password_hash, :first_name, :last_name, :phone, :role,
-                    :email_verified, :marketing_consent, NOW(), '1.0',
-                    'DK', 'da', 'Europe/Copenhagen', 'active'
-                )
-                RETURNING id
-            """)
+            )
+            available_columns = {row[0] for row in columns_result}
+
+            if not available_columns:
+                raise RuntimeError("Users table is not available in the current schema")
+
+            column_values: Dict[str, Any] = {
+                "email": email,
+                "password_hash": password_hash,
+                "first_name": first_name,
+                "last_name": last_name,
+                "phone": phone,
+                "role": role.value,
+                "status": UserStatus.ACTIVE.value,
+                "email_verified": email_verified,
+                "marketing_consent": marketing_consent,
+                "gdpr_consent_date": datetime.utcnow(),
+                "gdpr_consent_version": "1.0",
+                "country": "DK",
+                "preferred_language": "da",
+                "timezone": "Europe/Copenhagen",
+            }
+
+            insert_columns = [col for col in column_values if col in available_columns]
+
+            if "email" not in insert_columns or "password_hash" not in insert_columns:
+                raise RuntimeError("Required columns missing from users table")
+
+            insert_sql = ", ".join(insert_columns)
+            values_sql = ", ".join(f":{col}" for col in insert_columns)
 
             result = await db.execute(
-                query,
-                {
-                    "email": email,
-                    "password_hash": password_hash,
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "phone": phone,
-                    "role": role.value,
-                    "email_verified": email_verified,
-                    "marketing_consent": marketing_consent,
-                }
+                text(
+                    f"""
+                    INSERT INTO users ({insert_sql})
+                    VALUES ({values_sql})
+                    RETURNING id
+                    """
+                ),
+                {col: column_values[col] for col in insert_columns},
             )
 
             user_id = result.scalar()
+
+            # If the legacy schema is in use (no inline role column), fall back
+            # to the user_roles mapping table so the account receives a role.
+            if "role" not in available_columns:
+                role_id_result = await db.execute(
+                    text(
+                        "SELECT id FROM roles WHERE name = :role_name AND is_active = TRUE LIMIT 1"
+                    ),
+                    {"role_name": role.value},
+                )
+                role_id = role_id_result.scalar()
+                if role_id is not None:
+                    await db.execute(
+                        text(
+                            """
+                            INSERT INTO user_roles (user_id, role_id, is_active)
+                            VALUES (:user_id, :role_id, TRUE)
+                            ON CONFLICT (user_id, role_id) DO UPDATE
+                            SET is_active = EXCLUDED.is_active,
+                                assigned_at = CURRENT_TIMESTAMP
+                            """
+                        ),
+                        {"user_id": user_id, "role_id": role_id},
+                    )
+                else:
+                    logger.warning(
+                        "Role lookup failed during user creation", role=role.value
+                    )
+
             await db.commit()
 
-            logger.info("User created successfully", user_id=user_id, email=email, role=role.value)
+            logger.info(
+                "User created successfully",
+                user_id=user_id,
+                email=email,
+                role=role.value,
+            )
 
             return user_id
 
