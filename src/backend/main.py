@@ -37,6 +37,7 @@ from app.api.v1.endpoints import (
     websocket_calendar,
     monitoring
 )
+from app.auth.auth import auth_service
 from app.middleware.enhanced_security import (
     SecurityHeadersMiddleware,
     IPFilterMiddleware,
@@ -127,6 +128,13 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
     openapi_url="/openapi.json" if settings.DEBUG else None,
 )
+
+# Provide a standard JWKS endpoint for external services
+@app.get("/.well-known/jwks.json", include_in_schema=False)
+async def well_known_jwks() -> Dict[str, Any]:
+    """Expose JWKS document at a standard discovery location."""
+    return auth_service.jwks_document()
+
 
 # Add enhanced security middleware
 app.add_middleware(SecurityHeadersMiddleware)

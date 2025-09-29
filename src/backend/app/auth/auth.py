@@ -1,9 +1,8 @@
-"""
-Authentication utilities and JWT handling.
-"""
+"""Authentication utilities and JWT handling."""
+
 import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 import structlog
 from fastapi import HTTPException, status
@@ -14,7 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.user import User
-from app.models.enums import UserRole, UserStatus
+from app.models.enums import UserRole
+from app.utils.jwt_keys import (
+    JWKSConfigurationError,
+    build_jwks_document,
+    get_jwt_algorithm,
+    get_jwt_headers,
+    get_signing_key,
+    get_verification_key,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -65,8 +72,12 @@ class AuthService:
             "type": "access"
         })
 
+        headers = get_jwt_headers()
         encoded_jwt = jwt.encode(
-            to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            to_encode,
+            get_signing_key(),
+            algorithm=get_jwt_algorithm(),
+            headers=headers if headers else None,
         )
         return encoded_jwt
 
@@ -82,8 +93,12 @@ class AuthService:
             "type": "refresh"
         })
 
+        headers = get_jwt_headers()
         encoded_jwt = jwt.encode(
-            to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            to_encode,
+            get_signing_key(),
+            algorithm=get_jwt_algorithm(),
+            headers=headers if headers else None,
         )
         return encoded_jwt
 
@@ -92,7 +107,10 @@ class AuthService:
         """Verify and decode JWT token."""
         try:
             payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+                token,
+                get_verification_key(),
+                algorithms=[get_jwt_algorithm()],
+                options={"verify_aud": False},
             )
 
             if payload.get("type") != token_type:
@@ -353,6 +371,18 @@ class AuthService:
         except Exception as e:
             logger.error("Email availability check error", error=str(e), email=email)
             return False
+
+    @staticmethod
+    def jwks_document() -> Dict[str, Any]:
+        """Return the JWKS document for external verifiers like Neon RLS."""
+        try:
+            return build_jwks_document()
+        except JWKSConfigurationError as exc:
+            logger.error("JWKS configuration error", error=str(exc))
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            )
 
 
 # Create auth service instance

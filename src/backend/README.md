@@ -133,7 +133,7 @@ The application uses environment variables for configuration. See `.env.example`
 
 #### Essential Settings
 - `DATABASE_URL`: PostgreSQL connection string
-- `SECRET_KEY`: JWT signing key (32+ characters)
+- `SECRET_KEY`: Secret used for session cookies and symmetric security features (32+ characters)
 - `ENVIRONMENT`: Application environment (development/staging/production)
 - `DEBUG`: Enable debug mode (true/false)
 
@@ -141,6 +141,9 @@ The application uses environment variables for configuration. See `.env.example`
 - `ACCESS_TOKEN_EXPIRE_MINUTES`: JWT token expiration (default: 30)
 - `RATE_LIMIT_PER_MINUTE`: API rate limiting (default: 60)
 - `CORS_ORIGINS`: Allowed CORS origins
+- `JWT_PRIVATE_KEY`: RSA private key (PEM string or file path) used to sign JWTs
+- `JWT_PUBLIC_KEY`: Optional RSA public key override. When omitted, the public key is derived from the private key
+- `JWT_KEY_ID`: Identifier included in JWT headers and JWKS metadata
 
 #### Feature Flags
 - `ENABLE_GDPR_FEATURES`: Enable GDPR compliance endpoints
@@ -175,10 +178,19 @@ POST /api/v1/auth/login
 {
     "access_token": "eyJ...",
     "refresh_token": "eyJ...",
-    "token_type": "bearer",
-    "expires_in": 1800
+"token_type": "bearer",
+"expires_in": 1800
 }
 ```
+
+### Neon RLS & JWKS Support
+
+- The API now signs JWTs with an RSA key pair so Neon can validate requests via your JWKS endpoint.
+- Configure the following environment variables with your RSA key material: `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY` (optional) and `JWT_KEY_ID`.
+- Neon can fetch keys from either endpoint:
+  - `/.well-known/jwks.json` (standard discovery path)
+  - `/api/v1/auth/jwks` (namespaced API route)
+- After updating the environment, restart the API so the JWKS document is refreshed.
 
 ### Role-Based Access Control
 
