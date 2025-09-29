@@ -7,6 +7,7 @@ import { ServiceManagement } from './ServiceManagement';
 import { SystemAnalytics } from './SystemAnalytics';
 import { SystemSettings } from './SystemSettings';
 import { CalendarManagement } from './CalendarManagement';
+import { ContentManagement } from './ContentManagement';
 
 export const AdminDashboard: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ export const AdminDashboard: React.FC = () => {
         <Route path="/" element={<AdminOverview />} />
         <Route path="/users/*" element={<UserManagement />} />
         <Route path="/services/*" element={<ServiceManagement />} />
+        <Route path="/content" element={<ContentManagement />} />
         <Route path="/calendar" element={<CalendarManagement />} />
         <Route path="/analytics" element={<SystemAnalytics />} />
         <Route path="/settings" element={<SystemSettings />} />

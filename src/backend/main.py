@@ -35,7 +35,8 @@ from app.api.v1.endpoints import (
     users_management,
     payments_mollie,
     websocket_calendar,
-    monitoring
+    monitoring,
+    instagram,
 )
 from app.middleware.enhanced_security import (
     SecurityHeadersMiddleware,
@@ -387,6 +388,12 @@ app.include_router(
     monitoring.router,
     prefix=f"{settings.API_V1_PREFIX}/monitoring",
     tags=["Monitoring"],
+)
+
+app.include_router(
+    instagram.router,
+    prefix=f"{settings.API_V1_PREFIX}/instagram",
+    tags=["Instagram"],
 )
 
 # Rate-limited endpoints

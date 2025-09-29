@@ -168,6 +168,7 @@ export interface ApiError {
   details?: Record<string, any>;
 }
 
+
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -185,6 +186,45 @@ export interface RegisterApiResponse {
   email: string;
   message: string;
   email_verification_required: boolean;
+
+// Instagram content types
+export interface InstagramPostDto {
+  id: string;
+  instagram_id: string;
+  post_type: string;
+  caption?: string | null;
+  media_url: string;
+  thumbnail_url?: string | null;
+  permalink: string;
+  likes_count: number;
+  comments_count: number;
+  posted_at: string;
+  is_featured: boolean;
+  display_order: number;
+  synced_at?: string | null;
+  sync_error?: string | null;
+}
+
+export interface InstagramPost {
+  id: string;
+  instagramId: string;
+  postType: string;
+  caption?: string | null;
+  mediaUrl: string;
+  thumbnailUrl?: string | null;
+  permalink: string;
+  likesCount: number;
+  commentsCount: number;
+  postedAt: string;
+  isFeatured: boolean;
+  displayOrder: number;
+  syncedAt?: string | null;
+  syncError?: string | null;
+}
+
+export interface InstagramPostUpdatePayload {
+  isFeatured?: boolean;
+  displayOrder?: number;
 }
 
 // Analytics types

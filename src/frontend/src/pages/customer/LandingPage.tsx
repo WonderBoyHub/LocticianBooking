@@ -9,9 +9,14 @@ import {
   Users,
   Award,
   Instagram,
-  Calendar
+  Calendar,
+  Heart,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
+import { useGetInstagramPostsQuery } from '../../store/api';
+import type { InstagramPost } from '../../types';
+import { mapInstagramPostDto } from '../../utils/instagram';
 
 interface TestimonialProps {
   name: string;
@@ -91,6 +96,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const {
+    data: instagramResponse,
+    isLoading: instagramLoading,
+    isError: instagramError
+  } = useGetInstagramPostsQuery({ limit: 9 });
+
+  const instagramPosts = React.useMemo<InstagramPost[]>(() => {
+    if (!instagramResponse?.data) {
+      return [];
+    }
+
+    return instagramResponse.data.map(mapInstagramPostDto).slice(0, 9);
+  }, [instagramResponse]);
 
   const testimonials = [
     {
@@ -157,12 +175,61 @@ export const LandingPage: React.FC = () => {
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-dark mb-6 text-balance">
                 Professionel{' '}
-                <span className="text-gradient">Loc-pleje</span>{' '}
+                <span className="text-gradient">Loctician</span>{' '}
                 i København
               </h1>
+
+              <div className="mb-6">
+                {instagramLoading ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: 9 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square rounded-md bg-white/60 animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : instagramError ? (
+                  <div className="rounded-md border border-dashed border-brand-primary/40 bg-white/60 p-4 text-sm text-brand-dark/80">
+                    Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
+                  </div>
+                ) : instagramPosts.length ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {instagramPosts.map((post) => (
+                      <a
+                        key={post.id}
+                        href={post.permalink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative block aspect-square overflow-hidden rounded-md shadow-sm"
+                      >
+                        <img
+                          src={post.thumbnailUrl ?? post.mediaUrl}
+                          alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs">
+                          <p
+                            className="leading-snug text-white/90 overflow-hidden text-ellipsis"
+                            style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                          >
+                            {post.caption ?? 'Se opslaget på Instagram'}
+                          </p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed border-brand-primary/40 bg-white/60 p-4 text-sm text-brand-dark/80">
+                    Ingen Instagram-opslag er fremhævet endnu.
+                  </div>
+                )}
+              </div>
+
               <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                Specialist i loc-vedligeholdelse, styling og pleje.
-                Book din tid hos Københavns mest betroede loctician.
+                Specialist i loc-vedligeholdelse, styling og pleje. Book din tid hos Københavns mest betryggende loctician.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
@@ -410,22 +477,71 @@ export const LandingPage: React.FC = () => {
             </Button>
           </motion.div>
 
-          {/* Instagram Grid Placeholder */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4"
-          >
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="aspect-square bg-brand-accent rounded-lg flex items-center justify-center"
-              >
-                <Instagram className="h-8 w-8 text-brand-primary" />
-              </div>
-            ))}
-          </motion.div>
+          {instagramLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="aspect-square rounded-xl bg-brand-accent/50 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : instagramError ? (
+            <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
+              Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
+            </div>
+          ) : instagramPosts.length ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {instagramPosts.map((post, index) => (
+                <motion.a
+                  key={post.id}
+                  href={post.permalink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative aspect-square overflow-hidden rounded-xl shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <img
+                    src={post.thumbnailUrl ?? post.mediaUrl}
+                    alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                    <p
+                      className="text-sm font-medium text-white overflow-hidden text-ellipsis"
+                      style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                    >
+                      {post.caption ?? 'Se opslaget på Instagram'}
+                    </p>
+                    <div className="mt-3 flex items-center gap-4 text-xs text-white/80">
+                      <span className="flex items-center gap-1">
+                        <Heart className="h-4 w-4" />
+                        {post.likesCount}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="h-4 w-4" />
+                        {post.commentsCount}
+                      </span>
+                    </div>
+                  </div>
+                </motion.a>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
+              Ingen Instagram-opslag er fremhævet endnu. Tjek igen senere for nye transformationer.
+            </div>
+          )}
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import {
   UserCheck,
   Clock,
   Shield,
+  Images,
   ChevronDown,
   LogOut
 } from 'lucide-react';
@@ -46,6 +47,12 @@ const navigationItems: NavigationItem[] = [
     label: 'Service Management',
     path: '/admin/services',
     icon: Package,
+    roles: ['admin']
+  },
+  {
+    label: 'Content Management',
+    path: '/admin/content',
+    icon: Images,
     roles: ['admin']
   },
   {

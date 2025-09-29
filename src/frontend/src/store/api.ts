@@ -13,6 +13,8 @@ import type {
   BookingFormData,
   RegisterRequest,
   RegisterApiResponse,
+  InstagramPostDto,
+  InstagramPostUpdatePayload,
 } from '../types';
 
 // Define the API base URL
@@ -42,6 +44,7 @@ export const api = createApi({
     'Availability',
     'Analytics',
     'PageContent',
+    'InstagramPost',
   ],
   endpoints: (builder) => ({
     // Authentication endpoints
@@ -296,6 +299,57 @@ export const api = createApi({
         body: formData,
       }),
     }),
+
+    // Instagram endpoints
+    getInstagramPosts: builder.query<
+      ApiResponse<InstagramPostDto[]>,
+      { limit?: number } | void
+    >({
+      query: (params) => ({
+        url: '/instagram/posts',
+        params: {
+          limit: params?.limit ?? 9,
+        },
+      }),
+      providesTags: ['InstagramPost'],
+    }),
+
+    getInstagramPostsAdmin: builder.query<
+      ApiResponse<InstagramPostDto[]>,
+      { featuredOnly?: boolean } | void
+    >({
+      query: (params) => ({
+        url: '/instagram/posts/admin',
+        params: {
+          featured_only: params?.featuredOnly,
+        },
+      }),
+      providesTags: ['InstagramPost'],
+    }),
+
+    updateInstagramPost: builder.mutation<
+      ApiResponse<InstagramPostDto>,
+      { id: string; data: InstagramPostUpdatePayload }
+    >({
+      query: ({ id, data }) => {
+        const payload: Record<string, unknown> = {};
+
+        if (data.isFeatured !== undefined) {
+          payload.is_featured = data.isFeatured;
+        }
+
+        if (data.displayOrder !== undefined) {
+          payload.display_order = data.displayOrder;
+        }
+
+        return {
+          url: `/instagram/posts/${id}`,
+          method: 'PUT',
+          body: payload,
+        };
+      },
+      invalidatesTags: ['InstagramPost'],
+    }),
   }),
 });
 
@@ -326,4 +380,7 @@ export const {
   useGetPageQuery,
   useUpdatePageMutation,
   useUploadFileMutation,
+  useGetInstagramPostsQuery,
+  useGetInstagramPostsAdminQuery,
+  useUpdateInstagramPostMutation,
 } = api;
