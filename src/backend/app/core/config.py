@@ -2,14 +2,20 @@
 Configuration settings for the Loctician Booking System API.
 """
 from functools import lru_cache
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from pydantic import Field, validator, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow",
+    )
 
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"
@@ -39,6 +45,10 @@ class Settings(BaseSettings):
 
     # CORS
     BACKEND_CORS_ORIGINS: str = "http://localhost:3001"
+    FRONTEND_URL: str = Field(
+        default="http://localhost:3001",
+        description="Base URL for the frontend application",
+    )
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -120,11 +130,6 @@ class Settings(BaseSettings):
     # WebSocket
     WEBSOCKET_PING_INTERVAL: int = 20
     WEBSOCKET_PING_TIMEOUT: int = 10
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
 
 @lru_cache()
 def get_settings() -> Settings:
