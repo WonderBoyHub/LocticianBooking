@@ -31,7 +31,7 @@
 /* Base Styles */
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--color-brown-200);
   }
 
   body {
