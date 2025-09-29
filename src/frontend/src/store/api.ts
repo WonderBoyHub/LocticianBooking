@@ -11,6 +11,8 @@ import type {
   ApiResponse,
   FilterOptions,
   BookingFormData,
+  RegisterRequest,
+  RegisterApiResponse,
 } from '../types';
 
 // Define the API base URL
@@ -55,10 +57,7 @@ export const api = createApi({
       invalidatesTags: ['User'],
     }),
 
-    register: builder.mutation<
-      ApiResponse<{ user: User; token: string }>,
-      { email: string; password: string; name: string; phone?: string }
-    >({
+    register: builder.mutation<RegisterApiResponse, RegisterRequest>({
       query: (userData) => ({
         url: '/auth/register',
         method: 'POST',
