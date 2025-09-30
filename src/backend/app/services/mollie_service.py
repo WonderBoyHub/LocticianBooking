@@ -682,16 +682,34 @@ class MollieService:
     def get_checkout_url(self, payment: MolliePaymentResponse) -> Optional[str]:
         """Extract checkout URL from payment response."""
         links = getattr(payment, "_links", None)
+        if links is None:
+            try:
+                links = payment.model_dump().get("_links")
+            except AttributeError:
+                links = None
+
         if not links:
             return None
 
-        checkout = getattr(links, "checkout", None)
+        checkout = None
+        if isinstance(links, dict):
+            checkout = links.get("checkout")
+        else:
+            checkout = getattr(links, "checkout", None)
+
         if not checkout:
             return None
 
         if isinstance(checkout, dict):
             return checkout.get("href")
-        return getattr(checkout, "href", None) or (checkout.get("href") if hasattr(checkout, "get") else None)
+
+        href = getattr(checkout, "href", None)
+        if href:
+            return href
+
+        if hasattr(checkout, "get"):
+            return checkout.get("href")
+
         return None
 
     async def list_payment_methods(self, amount: Optional[MollieAmount] = None) -> List[Dict[str, Any]]:

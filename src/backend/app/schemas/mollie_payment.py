@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-
+from pydantic import BaseModel, Field, validator, ConfigDict
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -125,7 +125,7 @@ class MolliePaymentResponse(BaseModel):
     details: Optional[Dict[str, Any]] = None
 
     # Links
-    _links: MolliePaymentLinks
+    links: MolliePaymentLinks = Field(..., alias="_links")
 
     # Dates
     authorizedAt: Optional[datetime] = None
@@ -134,6 +134,13 @@ class MolliePaymentResponse(BaseModel):
     expiresAt: Optional[datetime] = None
     expiredAt: Optional[datetime] = None
     failedAt: Optional[datetime] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def _links(self) -> MolliePaymentLinks:
+        """Maintain backward compatibility with previous attribute name."""
+        return self.links
 
 
 # Customer Management Models
@@ -155,7 +162,13 @@ class MollieCustomerResponse(BaseModel):
     locale: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     createdAt: datetime
-    _links: Dict[str, Any]
+    links: Dict[str, Any] = Field(default_factory=dict, alias="_links")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def _links(self) -> Dict[str, Any]:
+        return self.links
 
 
 # Subscription Models
@@ -180,6 +193,10 @@ class MollieSubscriptionCreate(BaseModel):
             int(parts[0])
         except ValueError:
             raise ValueError('Interval must start with a number')
+
+        period = parts[1].lower()
+        if period not in {'day', 'days', 'week', 'weeks', 'month', 'months'}:
+
         valid_periods = {'day', 'days', 'week', 'weeks', 'month', 'months'}
         if parts[1] not in valid_periods:
             raise ValueError('Interval period must be days, weeks, or months')
@@ -205,7 +222,13 @@ class MollieSubscriptionResponse(BaseModel):
     customerId: str
     nextPaymentDate: Optional[str] = None
     startDate: Optional[str] = None
-    _links: Dict[str, Any]
+    links: Dict[str, Any] = Field(default_factory=dict, alias="_links")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def _links(self) -> Dict[str, Any]:
+        return self.links
 
 
 # Webhook Models
@@ -248,7 +271,13 @@ class MollieMandateResponse(BaseModel):
     mandateReference: Optional[str] = None
     signatureDate: Optional[str] = None
     createdAt: datetime
-    _links: Dict[str, Any]
+    links: Dict[str, Any] = Field(default_factory=dict, alias="_links")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def _links(self) -> Dict[str, Any]:
+        return self.links
 
 
 # Refund Models
@@ -271,7 +300,13 @@ class MollieRefundResponse(BaseModel):
     status: str
     paymentId: str
     createdAt: datetime
-    _links: Dict[str, Any]
+    links: Dict[str, Any] = Field(default_factory=dict, alias="_links")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def _links(self) -> Dict[str, Any]:
+        return self.links
 
 
 # Enhanced payment schemas for internal use
