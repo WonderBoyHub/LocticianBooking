@@ -1,20 +1,19 @@
-"""
-Comprehensive email service for the Loctician Booking System.
-Handles email templating, sending, queuing, and automation workflows.
-"""
+"""Email delivery and templating utilities for the Loctician Booking System."""
 import asyncio
+import json
 import re
+import textwrap
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import aiosmtplib
 import structlog
 from jinja2 import BaseLoader, Environment
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -33,6 +32,370 @@ except Exception:  # pragma: no cover - optional dependency
     BrevoApiException = Exception
 
 logger = structlog.get_logger(__name__)
+
+
+def _dedent(text: str) -> str:
+    """Return normalized template text without leading indentation."""
+
+    return textwrap.dedent(text).strip()
+
+
+DEFAULT_TEMPLATES: Dict[TemplateType, Dict[str, Any]] = {
+    TemplateType.BOOKING_CONFIRMATION: {
+        "name": "Booking Confirmation",
+        "subject": "Booking bekræftet – {{booking_number}}",
+        "html_content": _dedent(
+            """
+            <h2>Booking bekræftet</h2>
+            <p>Kære {{customer_name}},</p>
+            <p>Din tid er nu bekræftet:</p>
+            <ul>
+              <li><strong>Service:</strong> {{service_name}}</li>
+              <li><strong>Dato & tidspunkt:</strong> {{appointment_date}} kl. {{appointment_time}}</li>
+              <li><strong>Varighed:</strong> {{duration}} minutter</li>
+              <li><strong>Loctician:</strong> {{loctician_name}}</li>
+              <li><strong>Pris:</strong> {{total_amount}} DKK</li>
+            </ul>
+            <p>Vi glæder os til at se dig. Kom gerne 15 minutter før din tid.</p>
+            <p>Varme hilsner,<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Booking bekræftet – {{booking_number}}
+
+            Kære {{customer_name}},
+
+            Din tid er nu bekræftet:
+            - Service: {{service_name}}
+            - Dato & tidspunkt: {{appointment_date}} kl. {{appointment_time}}
+            - Varighed: {{duration}} minutter
+            - Loctician: {{loctician_name}}
+            - Pris: {{total_amount}} DKK
+
+            Vi glæder os til at se dig. Kom gerne 15 minutter før din tid.
+
+            Varme hilsner,
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "customer_name": "Kundens fulde navn",
+            "booking_number": "Bookingreference",
+            "service_name": "Navn på booket service",
+            "appointment_date": "Dato",
+            "appointment_time": "Tidspunkt",
+            "duration": "Varighed i minutter",
+            "loctician_name": "Locticians navn",
+            "total_amount": "Pris",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+    TemplateType.REMINDER: {
+        "name": "Appointment Reminder",
+        "subject": "Påmindelse: Din aftale i morgen – {{booking_number}}",
+        "html_content": _dedent(
+            """
+            <h2>Vi ses snart!</h2>
+            <p>Kære {{customer_name}},</p>
+            <p>Dette er en venlig påmindelse om din aftale i morgen:</p>
+            <ul>
+              <li><strong>Service:</strong> {{service_name}}</li>
+              <li><strong>Dato & tidspunkt:</strong> {{appointment_date}} kl. {{appointment_time}}</li>
+              <li><strong>Loctician:</strong> {{loctician_name}}</li>
+            </ul>
+            <p>Har du særlige ønsker, så giv os endelig besked.</p>
+            <p>Bedste hilsner,<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Påmindelse: Din aftale i morgen – {{booking_number}}
+
+            Kære {{customer_name}},
+
+            Dette er en venlig påmindelse om din aftale i morgen:
+            - Service: {{service_name}}
+            - Dato & tidspunkt: {{appointment_date}} kl. {{appointment_time}}
+            - Loctician: {{loctician_name}}
+
+            Har du særlige ønsker, så giv os endelig besked.
+
+            Bedste hilsner,
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "customer_name": "Kundens fulde navn",
+            "booking_number": "Bookingreference",
+            "service_name": "Navn på booket service",
+            "appointment_date": "Dato",
+            "appointment_time": "Tidspunkt",
+            "loctician_name": "Locticians navn",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+    TemplateType.CANCELLATION: {
+        "name": "Booking Cancellation",
+        "subject": "Din booking er aflyst – {{booking_number}}",
+        "html_content": _dedent(
+            """
+            <h2>Booking aflyst</h2>
+            <p>Kære {{customer_name}},</p>
+            <p>Vi bekræfter hermed, at din booking {{booking_number}} er aflyst.</p>
+            <p><strong>Årsag:</strong> {{cancellation_reason}}</p>
+            <p>Kontakt os gerne, hvis du ønsker at booke en ny tid.</p>
+            <p>Venlig hilsen,<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Din booking er aflyst – {{booking_number}}
+
+            Kære {{customer_name}},
+
+            Vi bekræfter hermed, at din booking {{booking_number}} er aflyst.
+            Årsag: {{cancellation_reason}}
+
+            Kontakt os gerne, hvis du ønsker at booke en ny tid.
+
+            Venlig hilsen,
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "customer_name": "Kundens fulde navn",
+            "booking_number": "Bookingreference",
+            "cancellation_reason": "Aflysningsårsag",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+    TemplateType.MARKETING: {
+        "name": "Marketing Inspiration",
+        "subject": "EKSKLUSIVE OPDATERINGER – Nyheder fra dit loctician team",
+        "html_content": _dedent(
+            """
+            <h1>EKSKLUSIVE OPDATERINGER</h1>
+            <p><strong>Hold dig opdateret</strong></p>
+            <p>Få de seneste tips, trends og særlige tilbud direkte i din indbakke. Vi lover kun inspirerende hårpleje.</p>
+            <p>{{custom_message}}</p>
+            <p><em>{{special_offer}}</em></p>
+            <p><a href="{{cta_url}}" style="color:#a67c52; font-weight:bold;">{{cta_label}}</a></p>
+            <p>Tak fordi du er en del af vores community.<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            EKSKLUSIVE OPDATERINGER
+
+            Hold dig opdateret
+
+            Få de seneste tips, trends og særlige tilbud direkte i din indbakke. Vi lover kun inspirerende hårpleje.
+
+            {{custom_message}}
+
+            {{special_offer}}
+
+            Læs mere: {{cta_url}}
+
+            Tak fordi du er en del af vores community.
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "custom_message": "Valgfri ekstra besked",
+            "special_offer": "Eventuel kampagne",
+            "cta_label": "Tekst til call-to-action",
+            "cta_url": "Link til kampagne",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+    TemplateType.CONTACT: {
+        "name": "Kontaktbesked",
+        "subject": "Ny kontaktforespørgsel fra {{sender_name}}",
+        "html_content": _dedent(
+            """
+            <h2>Ny kontaktforespørgsel</h2>
+            <p><strong>Navn:</strong> {{sender_name}}</p>
+            <p><strong>Email:</strong> {{sender_email}}</p>
+            <p><strong>Telefon:</strong> {{sender_phone}}</p>
+            <p><strong>Emne:</strong> {{topic}}</p>
+            <p>{{message_body}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Ny kontaktforespørgsel
+
+            Navn: {{sender_name}}
+            Email: {{sender_email}}
+            Telefon: {{sender_phone}}
+            Emne: {{topic}}
+
+            {{message_body}}
+            """
+        ),
+        "available_variables": {
+            "sender_name": "Afsenders navn",
+            "sender_email": "Afsenders email",
+            "sender_phone": "Telefonnummer",
+            "topic": "Emne",
+            "message_body": "Selve beskeden",
+        },
+    },
+    TemplateType.ADMIN_NOTIFICATION: {
+        "name": "Intern admin notifikation",
+        "subject": "Administrativ hændelse: {{subject}}",
+        "html_content": _dedent(
+            """
+            <h2>Administrativ notifikation</h2>
+            <p>{{subject}}</p>
+            <p>{{message_body}}</p>
+            <p><strong>Dato:</strong> {{timestamp}}</p>
+            <p><strong>Detaljer:</strong></p>
+            <pre>{{metadata}}</pre>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Administrativ notifikation
+
+            {{subject}}
+
+            {{message_body}}
+
+            Dato: {{timestamp}}
+            Detaljer:
+            {{metadata}}
+            """
+        ),
+        "available_variables": {
+            "subject": "Kort overskrift",
+            "message_body": "Notifikationstekst",
+            "timestamp": "Tidspunkt",
+            "metadata": "Supplerende information",
+        },
+    },
+    TemplateType.STAFF_NOTIFICATION: {
+        "name": "Intern staff notifikation",
+        "subject": "Teamopdatering: {{subject}}",
+        "html_content": _dedent(
+            """
+            <h2>Teamopdatering</h2>
+            <p>{{subject}}</p>
+            <p>{{message_body}}</p>
+            <p><strong>Dato:</strong> {{timestamp}}</p>
+            <p>Kontakt admin ved spørgsmål.</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Teamopdatering
+
+            {{subject}}
+
+            {{message_body}}
+
+            Dato: {{timestamp}}
+            Kontakt admin ved spørgsmål.
+            """
+        ),
+        "available_variables": {
+            "subject": "Kort overskrift",
+            "message_body": "Notifikationstekst",
+            "timestamp": "Tidspunkt",
+        },
+    },
+    TemplateType.WELCOME: {
+        "name": "Velkomst",
+        "subject": "Velkommen til Loctician Booking, {{customer_first_name}}",
+        "html_content": _dedent(
+            """
+            <h2>Velkommen!</h2>
+            <p>Kære {{customer_first_name}},</p>
+            <p>Tak fordi du har oprettet en konto hos os. Vi glæder os til at passe på dine locs.</p>
+            <p>Kh,<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Velkommen!
+
+            Kære {{customer_first_name}},
+
+            Tak fordi du har oprettet en konto hos os. Vi glæder os til at passe på dine locs.
+
+            Kh,
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "customer_first_name": "Fornavn",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+    TemplateType.PASSWORD_RESET: {
+        "name": "Password Reset",
+        "subject": "Nulstil din adgangskode",
+        "html_content": _dedent(
+            """
+            <h2>Nulstil adgangskode</h2>
+            <p>Kære {{customer_name}},</p>
+            <p>Vi har modtaget en anmodning om at nulstille din adgangskode. Brug linket herunder:</p>
+            <p><a href="{{reset_url}}">Nulstil adgangskode</a></p>
+            <p>Hvis du ikke har anmodet om dette, kan du ignorere mailen.</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Nulstil adgangskode
+
+            Kære {{customer_name}},
+
+            Vi har modtaget en anmodning om at nulstille din adgangskode. Brug linket herunder:
+            {{reset_url}}
+
+            Hvis du ikke har anmodet om dette, kan du ignorere mailen.
+            """
+        ),
+        "available_variables": {
+            "customer_name": "Kundens navn",
+            "reset_url": "Link til nulstilling",
+        },
+    },
+    TemplateType.INVOICE: {
+        "name": "Faktura",
+        "subject": "Din faktura er klar – {{invoice_number}}",
+        "html_content": _dedent(
+            """
+            <h2>Din faktura er klar</h2>
+            <p>Kære {{customer_name}},</p>
+            <p>Tak for dit besøg. Din faktura {{invoice_number}} er vedhæftet eller kan downloades via din konto.</p>
+            <p>Beløb: {{total_amount}} DKK</p>
+            <p>Kh,<br>{{business_name}}</p>
+            """
+        ),
+        "text_content": _dedent(
+            """
+            Din faktura er klar – {{invoice_number}}
+
+            Kære {{customer_name}},
+
+            Tak for dit besøg. Din faktura {{invoice_number}} er vedhæftet eller kan downloades via din konto.
+            Beløb: {{total_amount}} DKK
+
+            Kh,
+            {{business_name}}
+            """
+        ),
+        "available_variables": {
+            "customer_name": "Kundens navn",
+            "invoice_number": "Fakturanummer",
+            "total_amount": "Beløb",
+            "business_name": "Virksomhedsnavn",
+        },
+    },
+}
 
 
 class EmailTemplateRenderer:
@@ -367,6 +730,8 @@ class EmailService:
         """Initialize email service components."""
         self.renderer = EmailTemplateRenderer()
         self.sender = EmailSender()
+        self.default_templates = DEFAULT_TEMPLATES
+        self.business_name = settings.SMTP_FROM_NAME or "Loctician Booking"
 
     async def get_template(
         self,
@@ -430,6 +795,13 @@ class EmailService:
                     text_content, available_variables, created_by, session
                 )
 
+        result = await session.execute(
+            select(func.max(EmailTemplate.version)).where(
+                EmailTemplate.template_type == template_type
+            )
+        )
+        current_version = result.scalar() or 0
+
         # Deactivate existing templates of same type
         await session.execute(
             update(EmailTemplate)
@@ -446,7 +818,8 @@ class EmailService:
             text_content=text_content,
             available_variables=available_variables,
             created_by=created_by,
-            is_active=True
+            is_active=True,
+            version=current_version + 1
         )
 
         session.add(template)
@@ -461,6 +834,48 @@ class EmailService:
         )
 
         return template
+
+    async def ensure_default_templates(
+        self,
+        session: AsyncSession = None
+    ) -> None:
+        """Ensure that critical email templates exist with expected content."""
+
+        if session is None:
+            async with get_db_session() as session:
+                await self.ensure_default_templates(session=session)
+                return
+
+        for template_type, template_data in self.default_templates.items():
+            existing = await self.get_template(template_type, session)
+
+            if existing:
+                current_subject = (existing.subject or "").strip()
+                current_html = (existing.html_content or "").strip()
+                current_text = (existing.text_content or "").strip()
+
+                if (
+                    current_subject == template_data["subject"].strip()
+                    and current_html == template_data["html_content"].strip()
+                    and current_text == (template_data.get("text_content") or "").strip()
+                ):
+                    continue
+
+                logger.info(
+                    "Updating email template to default",
+                    template_type=template_type,
+                    previous_version=existing.version,
+                )
+
+            await self.create_template(
+                name=template_data["name"],
+                template_type=template_type,
+                subject=template_data["subject"],
+                html_content=template_data["html_content"],
+                text_content=template_data.get("text_content"),
+                available_variables=template_data.get("available_variables"),
+                session=session,
+            )
 
     async def queue_email(
         self,
@@ -564,6 +979,189 @@ class EmailService:
         )
 
         return queue_entry
+
+    async def send_marketing_email(
+        self,
+        *,
+        recipient_email: str,
+        recipient_name: Optional[str] = None,
+        custom_message: Optional[str] = None,
+        special_offer: Optional[str] = None,
+        cta_label: str = "Book en tid",
+        cta_url: Optional[str] = None,
+        session: AsyncSession = None,
+    ) -> bool:
+        """Queue a marketing email using the default marketing template."""
+
+        if session is None:
+            async with get_db_session() as session:
+                return await self.send_marketing_email(
+                    recipient_email=recipient_email,
+                    recipient_name=recipient_name,
+                    custom_message=custom_message,
+                    special_offer=special_offer,
+                    cta_label=cta_label,
+                    cta_url=cta_url,
+                    session=session,
+                )
+
+        variables = {
+            "custom_message": custom_message
+            or "Vi glæder os til at inspirere dig med nye styles og hårplejeråd.",
+            "special_offer": special_offer or "",
+            "cta_label": cta_label,
+            "cta_url": cta_url or f"{settings.FRONTEND_URL.rstrip('/')}/book", 
+            "business_name": self.business_name,
+        }
+
+        fallback_name = recipient_name
+        if not fallback_name:
+            fallback_name = recipient_email.split("@")[0] if "@" in recipient_email else recipient_email
+
+        queue_entry = await self.queue_email(
+            to_email=recipient_email,
+            to_name=fallback_name,
+            subject="EKSKLUSIVE OPDATERINGER – Nyheder fra dit loctician team",
+            template_type=TemplateType.MARKETING,
+            template_variables=variables,
+            session=session,
+        )
+
+        logger.info(
+            "Marketing email queued",
+            to_email=recipient_email,
+            queue_id=getattr(queue_entry, "id", None),
+        )
+
+        return queue_entry is not None
+
+    async def send_contact_message(
+        self,
+        *,
+        sender_name: str,
+        sender_email: str,
+        message_body: str,
+        sender_phone: Optional[str] = None,
+        topic: Optional[str] = None,
+        recipient_email: Optional[str] = None,
+        session: AsyncSession = None,
+    ) -> bool:
+        """Queue a contact message so staff receives website enquiries."""
+
+        if session is None:
+            async with get_db_session() as session:
+                return await self.send_contact_message(
+                    sender_name=sender_name,
+                    sender_email=sender_email,
+                    message_body=message_body,
+                    sender_phone=sender_phone,
+                    topic=topic,
+                    recipient_email=recipient_email,
+                    session=session,
+                )
+
+        target_email = recipient_email or settings.SMTP_FROM
+        if not target_email:
+            raise ValueError("A recipient email must be provided for contact messages")
+
+        variables = {
+            "sender_name": sender_name,
+            "sender_email": sender_email,
+            "sender_phone": sender_phone or "Ikke oplyst",
+            "topic": topic or "Kontaktformular",
+            "message_body": message_body,
+        }
+
+        queue_entry = await self.queue_email(
+            to_email=target_email,
+            subject=f"Ny kontaktforespørgsel fra {sender_name}",
+            template_type=TemplateType.CONTACT,
+            template_variables=variables,
+            from_name=self.business_name,
+            session=session,
+        )
+
+        logger.info(
+            "Contact email queued",
+            to_email=target_email,
+            sender_email=sender_email,
+            queue_id=getattr(queue_entry, "id", None),
+        )
+
+        return queue_entry is not None
+
+    async def send_internal_notification(
+        self,
+        *,
+        recipients: List[Tuple[str, Optional[str]]],
+        subject: str,
+        message_body: str,
+        audience: Literal["admin", "staff"] = "admin",
+        metadata: Optional[Dict[str, Any]] = None,
+        session: AsyncSession = None,
+    ) -> int:
+        """Queue notifications for admin or staff members."""
+
+        if not recipients:
+            return 0
+
+        if session is None:
+            async with get_db_session() as session:
+                return await self.send_internal_notification(
+                    recipients=recipients,
+                    subject=subject,
+                    message_body=message_body,
+                    audience=audience,
+                    metadata=metadata,
+                    session=session,
+                )
+
+        template_type = (
+            TemplateType.ADMIN_NOTIFICATION
+            if audience == "admin"
+            else TemplateType.STAFF_NOTIFICATION
+        )
+        metadata_payload = (
+            json.dumps(metadata, ensure_ascii=False, indent=2) if metadata else ""
+        )
+        timestamp = datetime.utcnow().strftime("%d-%m-%Y %H:%M")
+
+        delivered = 0
+        for email, name in recipients:
+            variables = {
+                "subject": subject,
+                "message_body": message_body,
+                "timestamp": timestamp,
+                "metadata": metadata_payload,
+            }
+
+            try:
+                queue_entry = await self.queue_email(
+                    to_email=email,
+                    to_name=name,
+                    subject=f"{subject}",
+                    template_type=template_type,
+                    template_variables=variables,
+                    session=session,
+                )
+                if queue_entry:
+                    delivered += 1
+            except Exception as exc:  # pragma: no cover - defensive log
+                logger.error(
+                    "Failed to queue internal notification",
+                    to_email=email,
+                    audience=audience,
+                    error=str(exc),
+                )
+
+        logger.info(
+            "Internal notifications queued",
+            audience=audience,
+            total=len(recipients),
+            delivered=delivered,
+        )
+
+        return delivered
 
     async def process_email_queue(
         self,
@@ -685,7 +1283,7 @@ class EmailService:
             await self.queue_email(
                 to_email=booking.customer.email,
                 to_name=f"{booking.customer.first_name} {booking.customer.last_name}",
-                subject="Booking bekræftelse - {booking_number}",
+                subject=f"Booking bekræftelse - {booking.booking_number}",
                 template_type=TemplateType.BOOKING_CONFIRMATION,
                 template_variables=variables,
                 user_id=booking.customer_id,
@@ -841,7 +1439,7 @@ class EmailService:
                 await self.queue_email(
                     to_email=email_data["to_email"],
                     to_name=email_data["to_name"],
-                    subject="Aflysning af booking - {booking_number}",
+                    subject=f"Aflysning af booking - {booking.booking_number}",
                     template_type=TemplateType.CANCELLATION,
                     template_variables=variables,
                     user_id=email_data["user_id"],

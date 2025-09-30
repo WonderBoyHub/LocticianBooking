@@ -59,6 +59,7 @@ from app.utils.enhanced_errors import (
 from pydantic import ValidationError
 from app.core.config import settings
 from app.core.database import close_db, db_health, init_db
+from app.services.email_service import email_service
 
 # Configure structured logging
 structlog.configure(
@@ -102,6 +103,10 @@ async def lifespan(_: FastAPI):
         else:
             logger.error("Database health check failed")
             raise Exception("Database health check failed")
+
+        # Ensure required email templates are available
+        await email_service.ensure_default_templates()
+        logger.info("Default email templates ensured")
 
         logger.info("Application startup completed")
 
