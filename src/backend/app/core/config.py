@@ -27,8 +27,20 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 0
     DB_POOL_RECYCLE: int = 300
 
-    # Redis
+    # Redis / Upstash
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
+    UPSTASH_REDIS_REST_URL: Optional[str] = Field(
+        default=None,
+        description="Upstash Redis REST API endpoint",
+    )
+    UPSTASH_REDIS_REST_TOKEN: Optional[str] = Field(
+        default=None,
+        description="Upstash Redis REST API token with read/write permissions",
+    )
+    UPSTASH_REDIS_REST_READONLY_TOKEN: Optional[str] = Field(
+        default=None,
+        description="Optional Upstash Redis REST API token limited to read-only operations",
+    )
 
     # Security
     SECRET_KEY: str = Field(

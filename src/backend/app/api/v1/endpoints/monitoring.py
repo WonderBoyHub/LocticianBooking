@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_admin, require_staff
 from app.core.database import get_db
+from app.core.redis_client import flush_upstash_database
 from app.models.user import User
 
 logger = structlog.get_logger(__name__)
@@ -694,8 +695,12 @@ async def clear_application_cache(
 ) -> Dict[str, str]:
     """Clear application cache (admin only)."""
     try:
-        # Clear Redis cache if implemented
-        # await redis_client.flushdb()
+        # Clear Redis cache if configured
+        flushed = await flush_upstash_database()
+        if flushed:
+            logger.info("Upstash Redis cache flushed", cleared_by=current_user.id)
+        elif flushed is False:
+            logger.warning("Upstash Redis cache flush failed", cleared_by=current_user.id)
 
         # Clear database query cache
         await db.execute(text("SELECT pg_stat_reset()"))
