@@ -296,8 +296,8 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({
                     : 'text-gray-700 hover:bg-brand-accent hover:text-brand-primary'
                   }
                 `}
-                whileHover={!day.isDisabled ? { scale: 1.05 } : {}}
-                whileTap={!day.isDisabled ? { scale: 0.95 } : {}}
+                whilehover={!day.isDisabled ? { scale: 1.05 } : {}}
+                whiletap={!day.isDisabled ? { scale: 0.95 } : {}}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.01, duration: 0.2 }}
@@ -376,8 +376,8 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({
                                 : 'bg-gray-50 text-gray-700 hover:bg-brand-accent hover:text-brand-primary'
                               }
                             `}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whilehover={{ scale: 1.05 }}
+                            whiletap={{ scale: 0.95 }}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05, duration: 0.2 }}

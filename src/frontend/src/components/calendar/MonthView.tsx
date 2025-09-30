@@ -105,7 +105,7 @@ const DayCell: React.FC<DayCellProps> = ({
         {hiddenEventCount > 0 && (
           <motion.div
             className="text-xs text-gray-500 text-center py-1 bg-gray-100 rounded"
-            whileHover={{ scale: 1.05 }}
+            whilehover={{ scale: 1.05 }}
           >
             +{hiddenEventCount} {t('common.more')}
           </motion.div>

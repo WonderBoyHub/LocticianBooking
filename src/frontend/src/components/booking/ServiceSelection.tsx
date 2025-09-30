@@ -27,8 +27,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSelect, isSelected
   return (
     <motion.div
       layout
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whilehover={{ scale: 1.02 }}
+      whiletap={{ scale: 0.98 }}
       className={clsx(
         'border rounded-xl p-6 cursor-pointer transition-all duration-200',
         isSelected

@@ -76,8 +76,8 @@ export const Card: React.FC<CardProps> = ({
       <motion.div
         className={cardClasses}
         onClick={onClick}
-        whileHover={hover ? { scale: 1.02 } : undefined}
-        whileTap={hover ? { scale: 0.98 } : undefined}
+        whilehover={hover ? { scale: 1.02 } : undefined}
+        whiletap={hover ? { scale: 0.98 } : undefined}
       >
         {children}
       </motion.div>

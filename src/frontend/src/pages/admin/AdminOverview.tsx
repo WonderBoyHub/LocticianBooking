@@ -37,7 +37,7 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, color, href }) => {
   const content = (
     <motion.div
-      whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }}
+      whilehover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }}
       className="bg-white rounded-xl p-6 shadow-soft border border-brown-200 cursor-pointer"
     >
       <div className="flex items-center justify-between">
@@ -80,8 +80,8 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon: Ico
   return (
     <Link to={href}>
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whilehover={{ scale: 1.02 }}
+        whiletap={{ scale: 0.98 }}
         className="bg-white rounded-xl p-4 shadow-soft border border-brown-200 hover:shadow-md transition-shadow"
       >
         <div className="flex items-center space-x-3">

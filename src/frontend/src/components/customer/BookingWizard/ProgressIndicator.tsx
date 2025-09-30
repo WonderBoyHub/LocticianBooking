@@ -84,8 +84,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                           ? 'bg-white border-brand-secondary text-brand-primary hover:border-brand-primary'
                           : 'bg-gray-100 border-gray-300 text-gray-400'
                       }`}
-                      whileHover={isClickable ? { scale: 1.05 } : {}}
-                      whileTap={isClickable ? { scale: 0.95 } : {}}
+                      whilehover={isClickable ? { scale: 1.05 } : {}}
+                      whiletap={isClickable ? { scale: 0.95 } : {}}
                     >
                       {status === 'completed' ? (
                         <Check className="h-6 w-6" />

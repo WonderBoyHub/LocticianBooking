@@ -392,8 +392,8 @@ export const FormSubmit: React.FC<FormSubmitProps> = ({
     <motion.button
       type="submit"
       disabled={isDisabled}
-      whileHover={{ scale: isDisabled ? 1 : 1.02 }}
-      whileTap={{ scale: isDisabled ? 1 : 0.98 }}
+      whilehover={{ scale: isDisabled ? 1 : 1.02 }}
+      whiletap={{ scale: isDisabled ? 1 : 0.98 }}
       className={clsx(
         'inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-offset-2',

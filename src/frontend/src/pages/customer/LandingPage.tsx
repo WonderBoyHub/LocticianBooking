@@ -594,7 +594,7 @@ export const LandingPage: React.FC = () => {
                 <motion.figure
                   key={item.id}
                   className="relative overflow-hidden rounded-xl shadow-soft border border-brown-100 bg-white"
-                  whileHover={{ scale: 1.01 }}
+                  whilehover={{ scale: 1.01 }}
                 >
                   {item.mimeType.startsWith('video/') ? (
                     <video

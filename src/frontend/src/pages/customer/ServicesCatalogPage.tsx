@@ -77,7 +77,7 @@ const ServicesGrid: React.FC<{
         return (
           <motion.div
             key={service.id}
-            whileHover={{ y: -4, boxShadow: '0 20px 30px -15px rgba(107,78,50,0.35)' }}
+            whilehover={{ y: -4, boxShadow: '0 20px 30px -15px rgba(107,78,50,0.35)' }}
             className="bg-white rounded-2xl border border-brown-100 shadow-soft overflow-hidden flex flex-col"
           >
             <div className="p-6 flex-1 flex flex-col">
@@ -189,7 +189,7 @@ const MediaSpotlight: React.FC<{ media: MediaAsset[] }> = ({ media }) => {
           return (
             <motion.figure
               key={item.id}
-              whileHover={{ scale: 1.02 }}
+              whilehover={{ scale: 1.02 }}
               className="relative overflow-hidden rounded-2xl shadow-soft border border-brown-100"
             >
               {isVideo ? (

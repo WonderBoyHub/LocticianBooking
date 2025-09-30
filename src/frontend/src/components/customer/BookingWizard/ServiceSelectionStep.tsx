@@ -159,8 +159,8 @@ export const ServiceSelectionStep: React.FC<ServiceSelectionStepProps> = ({
                       : 'border-brown-200 bg-white hover:border-brand-secondary'
                   }`}
                   onClick={() => onAddOnToggle(addOn)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whilehover={{ scale: 1.02 }}
+                  whiletap={{ scale: 0.98 }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
