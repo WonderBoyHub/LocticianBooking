@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import List, Optional, Union
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 
 # Guest Contact Information
@@ -17,8 +17,8 @@ class GuestContactInfo(BaseModel):
     last_name: str = Field(..., max_length=100, description="Guest last name")
     phone: Optional[str] = Field(None, max_length=20, description="Guest phone number")
 
-    @validator('email')
-    def validate_email(cls, v):
+    @field_validator('email')
+    def validate_email(cls, v: str) -> str:
         import re
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', v):
             raise ValueError('Invalid email format')
@@ -60,17 +60,17 @@ class BookingBase(BaseModel):
     total_price: Decimal = Field(..., ge=0, description="Total price")
     notes: Optional[str] = Field(None, description="Customer notes")
 
-    @validator('booking_date')
-    def validate_booking_date(cls, v):
+    @field_validator('booking_date')
+    def validate_booking_date(cls, v: DateType) -> DateType:
         if v < DateType.today():
             raise ValueError('Booking date cannot be in the past')
         return v
 
-    @root_validator
-    def validate_booking_datetime(cls, values):
+    @model_validator(mode="after")
+    def validate_booking_datetime(cls, values: "BookingBase") -> "BookingBase":
         """Validate that booking datetime is in the future."""
-        booking_date = values.get('booking_date')
-        booking_time = values.get('booking_time')
+        booking_date = values.booking_date
+        booking_time = values.booking_time
 
         if booking_date and booking_time:
             booking_datetime = datetime.combine(booking_date, booking_time)
@@ -132,17 +132,17 @@ class BookingCreateRequest(BaseModel):
     # Guest information (required only for guest bookings)
     guest_info: Optional[GuestContactInfo] = Field(None, description="Guest contact information")
 
-    @validator('booking_date')
-    def validate_booking_date(cls, v):
+    @field_validator('booking_date')
+    def validate_booking_date(cls, v: DateType) -> DateType:
         if v < DateType.today():
             raise ValueError('Booking date cannot be in the past')
         return v
 
-    @root_validator
-    def validate_booking_request(cls, values):
+    @model_validator(mode="after")
+    def validate_booking_request(cls, values: "BookingCreateRequest") -> "BookingCreateRequest":
         """Validate booking request based on authentication status."""
-        booking_date = values.get('booking_date')
-        booking_time = values.get('booking_time')
+        booking_date = values.booking_date
+        booking_time = values.booking_time
 
         if booking_date and booking_time:
             booking_datetime = datetime.combine(booking_date, booking_time)
@@ -160,8 +160,8 @@ class BookingUpdate(BaseModel):
     notes: Optional[str] = None
     internal_notes: Optional[str] = None  # Staff-only notes
 
-    @validator('booking_date')
-    def validate_booking_date(cls, v):
+    @field_validator('booking_date')
+    def validate_booking_date(cls, v: Optional[DateType]) -> Optional[DateType]:
         if v and v < DateType.today():
             raise ValueError('Booking date cannot be in the past')
         return v
@@ -250,10 +250,13 @@ class BookingContactInfo(BaseModel):
     full_name: str
     is_user_booking: bool
 
-    @validator('full_name', pre=True, always=True)
-    def create_full_name(cls, v, values):
-        first_name = values.get('first_name', '')
-        last_name = values.get('last_name', '')
+    @field_validator('full_name', mode='before')
+    def create_full_name(cls, v: Optional[str], info: ValidationInfo) -> str:
+        if v:
+            return v
+        data = info.data or {}
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
         return f"{first_name} {last_name}".strip()
 
 
@@ -280,14 +283,15 @@ class AvailabilityRequest(BaseModel):
     end_date: Optional[DateType] = Field(None, description="End date for availability check")
     min_duration: Optional[int] = Field(None, ge=15, description="Minimum slot duration in minutes")
 
-    @validator('end_date')
-    def validate_date_range(cls, v, values):
-        if v and 'start_date' in values and v < values['start_date']:
+    @field_validator('end_date')
+    def validate_date_range(cls, v: Optional[DateType], info: ValidationInfo) -> Optional[DateType]:
+        start_date = info.data.get('start_date') if info.data else None
+        if v and start_date and v < start_date:
             raise ValueError('End date must be after start date')
         return v
 
-    @validator('start_date')
-    def validate_start_date(cls, v):
+    @field_validator('start_date')
+    def validate_start_date(cls, v: DateType) -> DateType:
         if v < DateType.today():
             raise ValueError('Start date cannot be in the past')
         return v

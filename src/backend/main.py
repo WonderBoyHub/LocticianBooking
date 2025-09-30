@@ -41,6 +41,7 @@ from app.api.v1.endpoints import (
     instagram,
     cms,
     media,
+    services,
 )
 from app.middleware.enhanced_security import (
     SecurityHeadersMiddleware,
@@ -414,6 +415,12 @@ app.include_router(
     media.router,
     prefix=f"{settings.API_V1_PREFIX}/media",
     tags=["Media Library"],
+)
+
+app.include_router(
+    services.router,
+    prefix=f"{settings.API_V1_PREFIX}/services",
+    tags=["Services"],
 )
 
 # Rate-limited endpoints

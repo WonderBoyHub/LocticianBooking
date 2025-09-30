@@ -1,15 +1,15 @@
-"""
-Configuration settings for the Loctician Booking System API.
-"""
+"""Configuration settings for the Loctician Booking System API."""
 from functools import lru_cache
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from pydantic import Field, validator, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings."""
+
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"
@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     DESCRIPTION: str = "Comprehensive booking system for locticians"
 
     # Database
-    DATABASE_URL: str = Field(..., description="PostgreSQL database URL")
+    DATABASE_URL: str = Field(
+        default="sqlite+aiosqlite:///./app.db",
+        description="Database URL (defaults to local SQLite for development/tests)",
+    )
     DATABASE_TEST_URL: Optional[str] = None
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 0
@@ -28,7 +31,11 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
 
     # Security
-    SECRET_KEY: str = Field(..., min_length=32, description="Secret key for JWT tokens")
+    SECRET_KEY: str = Field(
+        default="dev-secret-key-change-me-please-0123456789",
+        min_length=32,
+        description="Secret key for JWT tokens",
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -151,11 +158,6 @@ class Settings(BaseSettings):
     # WebSocket
     WEBSOCKET_PING_INTERVAL: int = 20
     WEBSOCKET_PING_TIMEOUT: int = 10
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
 
 @lru_cache()
 def get_settings() -> Settings:

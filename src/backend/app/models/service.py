@@ -101,5 +101,10 @@ class Service(Base, BaseModel):
         """Get formatted price string."""
         return f"{self.base_price:.2f} DKK"
 
+    @property
+    def category_name(self) -> Optional[str]:
+        """Expose related category name for serializers."""
+        return self.category.name if self.category else None
+
     def __repr__(self) -> str:
         return f"<Service(id={self.id}, name={self.name}, price={self.base_price})>"

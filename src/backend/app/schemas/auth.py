@@ -4,7 +4,7 @@ Authentication schemas.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
 from app.models.enums import UserRole
 
@@ -49,9 +49,10 @@ class PasswordChangeRequest(BaseModel):
     new_password: str = Field(..., min_length=8, description="New password")
     confirm_password: str = Field(..., description="Confirm new password")
 
-    @validator("confirm_password")
-    def passwords_match(cls, v, values):
-        if "new_password" in values and v != values["new_password"]:
+    @field_validator("confirm_password")
+    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
+        new_password = info.data.get("new_password") if info.data else None
+        if new_password is not None and v != new_password:
             raise ValueError("Passwords do not match")
         return v
 
@@ -69,9 +70,10 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=8, description="New password")
     confirm_password: str = Field(..., description="Confirm new password")
 
-    @validator("confirm_password")
-    def passwords_match(cls, v, values):
-        if "new_password" in values and v != values["new_password"]:
+    @field_validator("confirm_password")
+    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
+        new_password = info.data.get("new_password") if info.data else None
+        if new_password is not None and v != new_password:
             raise ValueError("Passwords do not match")
         return v
 
@@ -95,8 +97,8 @@ class RegisterRequest(BaseModel):
     marketing_consent: bool = Field(default=False, description="Marketing consent")
     gdpr_consent: bool = Field(..., description="GDPR consent required")
 
-    @validator("password")
-    def validate_password(cls, v):
+    @field_validator("password")
+    def validate_password(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         if not any(c.isupper() for c in v):
@@ -107,14 +109,15 @@ class RegisterRequest(BaseModel):
             raise ValueError("Password must contain at least one digit")
         return v
 
-    @validator("confirm_password")
-    def passwords_match(cls, v, values):
-        if "password" in values and v != values["password"]:
+    @field_validator("confirm_password")
+    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
+        password = info.data.get("password") if info.data else None
+        if password is not None and v != password:
             raise ValueError("Passwords do not match")
         return v
 
-    @validator("gdpr_consent")
-    def validate_gdpr_consent(cls, v):
+    @field_validator("gdpr_consent")
+    def validate_gdpr_consent(cls, v: bool) -> bool:
         if not v:
             raise ValueError("GDPR consent is required")
         return v
