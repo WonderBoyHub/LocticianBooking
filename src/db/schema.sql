@@ -472,7 +472,10 @@ CREATE TYPE templatetype AS ENUM (
     'WELCOME',
     'PASSWORD_RESET',
     'MARKETING',
-    'INVOICE'
+    'INVOICE',
+    'CONTACT',
+    'ADMIN_NOTIFICATION',
+    'STAFF_NOTIFICATION'
 );
 
 CREATE TABLE email_templates (

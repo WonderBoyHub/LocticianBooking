@@ -74,6 +74,9 @@ class TemplateType(str, enum.Enum):
     PASSWORD_RESET = "PASSWORD_RESET"
     MARKETING = "MARKETING"
     INVOICE = "INVOICE"
+    CONTACT = "CONTACT"
+    ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION"
+    STAFF_NOTIFICATION = "STAFF_NOTIFICATION"
 
 
 class EmailStatus(str, enum.Enum):

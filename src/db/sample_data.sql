@@ -315,66 +315,163 @@ INSERT INTO bookings (
 -- =====================================================
 
 INSERT INTO email_templates (name, template_type, subject, html_content, text_content, available_variables) VALUES
-('Booking Confirmation', 'booking_confirmation',
- 'Booking Confirmed - {{booking_number}}',
- '<h2>Booking Confirmed</h2>
-  <p>Dear {{customer_name}},</p>
-  <p>Your appointment has been confirmed:</p>
+('Booking Confirmation', 'BOOKING_CONFIRMATION',
+ 'Booking bekræftet – {{booking_number}}',
+ '<h2>Booking bekræftet</h2>
+  <p>Kære {{customer_name}},</p>
+  <p>Din tid er nu bekræftet:</p>
   <ul>
     <li><strong>Service:</strong> {{service_name}}</li>
-    <li><strong>Date & Time:</strong> {{appointment_date}} at {{appointment_time}}</li>
-    <li><strong>Duration:</strong> {{duration}} minutes</li>
+    <li><strong>Dato & tidspunkt:</strong> {{appointment_date}} kl. {{appointment_time}}</li>
+    <li><strong>Varighed:</strong> {{duration}} minutter</li>
     <li><strong>Loctician:</strong> {{loctician_name}}</li>
-    <li><strong>Total:</strong> {{total_amount}} DKK</li>
+    <li><strong>Pris:</strong> {{total_amount}} DKK</li>
   </ul>
-  <p>Please arrive 15 minutes early.</p>
-  <p>Best regards,<br>{{business_name}}</p>',
- 'Booking Confirmed - {{booking_number}}
+  <p>Vi glæder os til at se dig. Kom gerne 15 minutter før din tid.</p>
+  <p>Varme hilsner,<br>{{business_name}}</p>',
+ 'Booking bekræftet – {{booking_number}}
 
-Dear {{customer_name}},
+Kære {{customer_name}},
 
-Your appointment has been confirmed:
+Din tid er nu bekræftet:
 - Service: {{service_name}}
-- Date & Time: {{appointment_date}} at {{appointment_time}}
-- Duration: {{duration}} minutes
+- Dato & tidspunkt: {{appointment_date}} kl. {{appointment_time}}
+- Varighed: {{duration}} minutter
 - Loctician: {{loctician_name}}
-- Total: {{total_amount}} DKK
+- Pris: {{total_amount}} DKK
 
-Please arrive 15 minutes early.
+Vi glæder os til at se dig. Kom gerne 15 minutter før din tid.
 
-Best regards,
+Varme hilsner,
 {{business_name}}',
- '{"customer_name": "Customer full name", "booking_number": "Booking reference", "service_name": "Name of booked service", "appointment_date": "Date of appointment", "appointment_time": "Time of appointment", "duration": "Service duration in minutes", "loctician_name": "Loctician full name", "total_amount": "Total price", "business_name": "Business name"}'),
+ '{"customer_name": "Kundens fulde navn", "booking_number": "Bookingreference", "service_name": "Navn på booket service", "appointment_date": "Aftalens dato", "appointment_time": "Aftalens tidspunkt", "duration": "Varighed i minutter", "loctician_name": "Locticians navn", "total_amount": "Pris", "business_name": "Virksomhedsnavn"}'),
 
-('Appointment Reminder', 'reminder',
- 'Reminder: Your appointment tomorrow - {{booking_number}}',
- '<h2>Appointment Reminder</h2>
-  <p>Dear {{customer_name}},</p>
-  <p>This is a friendly reminder about your appointment tomorrow:</p>
+('Appointment Reminder', 'REMINDER',
+ 'Påmindelse: Din aftale i morgen – {{booking_number}}',
+ '<h2>Vi ses snart!</h2>
+  <p>Kære {{customer_name}},</p>
+  <p>Dette er en venlig påmindelse om din aftale i morgen:</p>
   <ul>
     <li><strong>Service:</strong> {{service_name}}</li>
-    <li><strong>Date & Time:</strong> {{appointment_date}} at {{appointment_time}}</li>
+    <li><strong>Dato & tidspunkt:</strong> {{appointment_date}} kl. {{appointment_time}}</li>
     <li><strong>Loctician:</strong> {{loctician_name}}</li>
   </ul>
-  <p>Please arrive 15 minutes early and bring any special products if discussed.</p>
-  <p>Looking forward to seeing you!</p>
-  <p>Best regards,<br>{{business_name}}</p>',
- 'Appointment Reminder
+  <p>Har du særlige ønsker, så giv os endelig besked.</p>
+  <p>Bedste hilsner,<br>{{business_name}}</p>',
+ 'Påmindelse: Din aftale i morgen – {{booking_number}}
 
-Dear {{customer_name}},
+Kære {{customer_name}},
 
-This is a friendly reminder about your appointment tomorrow:
+Dette er en venlig påmindelse om din aftale i morgen:
 - Service: {{service_name}}
-- Date & Time: {{appointment_date}} at {{appointment_time}}
+- Dato & tidspunkt: {{appointment_date}} kl. {{appointment_time}}
 - Loctician: {{loctician_name}}
 
-Please arrive 15 minutes early and bring any special products if discussed.
+Har du særlige ønsker, så giv os endelig besked.
 
-Looking forward to seeing you!
-
-Best regards,
+Bedste hilsner,
 {{business_name}}',
- '{"customer_name": "Customer full name", "booking_number": "Booking reference", "service_name": "Name of booked service", "appointment_date": "Date of appointment", "appointment_time": "Time of appointment", "loctician_name": "Loctician full name", "business_name": "Business name"}');
+ '{"customer_name": "Kundens fulde navn", "booking_number": "Bookingreference", "service_name": "Navn på booket service", "appointment_date": "Aftalens dato", "appointment_time": "Aftalens tidspunkt", "loctician_name": "Locticians navn", "business_name": "Virksomhedsnavn"}'),
+
+('Booking Cancellation', 'CANCELLATION',
+ 'Din booking er aflyst – {{booking_number}}',
+ '<h2>Booking aflyst</h2>
+  <p>Kære {{customer_name}},</p>
+  <p>Vi bekræfter hermed, at din booking {{booking_number}} er aflyst.</p>
+  <p><strong>Årsag:</strong> {{cancellation_reason}}</p>
+  <p>Kontakt os gerne, hvis du ønsker at booke en ny tid.</p>
+  <p>Venlig hilsen,<br>{{business_name}}</p>',
+ 'Din booking er aflyst – {{booking_number}}
+
+Kære {{customer_name}},
+
+Vi bekræfter hermed, at din booking {{booking_number}} er aflyst.
+Årsag: {{cancellation_reason}}
+
+Kontakt os gerne, hvis du ønsker at booke en ny tid.
+
+Venlig hilsen,
+{{business_name}}',
+ '{"customer_name": "Kundens fulde navn", "booking_number": "Bookingreference", "cancellation_reason": "Aflysningsårsag", "business_name": "Virksomhedsnavn"}'),
+
+('Marketing Inspiration', 'MARKETING',
+ 'EKSKLUSIVE OPDATERINGER – Nyheder fra dit loctician team',
+ '<h1>EKSKLUSIVE OPDATERINGER</h1>
+  <p><strong>Hold dig opdateret</strong></p>
+  <p>Få de seneste tips, trends og særlige tilbud direkte i din indbakke. Vi lover kun inspirerende hårpleje.</p>
+  <p>{{custom_message}}</p>
+  <p><em>{{special_offer}}</em></p>
+  <p><a href="{{cta_url}}" style="color:#a67c52; font-weight:bold;">{{cta_label}}</a></p>
+  <p>Tak fordi du er en del af vores community.<br>{{business_name}}</p>',
+ 'EKSKLUSIVE OPDATERINGER
+
+Hold dig opdateret
+
+Få de seneste tips, trends og særlige tilbud direkte i din indbakke. Vi lover kun inspirerende hårpleje.
+
+{{custom_message}}
+
+{{special_offer}}
+
+Læs mere: {{cta_url}}
+
+Tak fordi du er en del af vores community.
+{{business_name}}',
+ '{"custom_message": "Valgfri ekstra besked", "special_offer": "Eventuel kampagne", "cta_label": "Tekst til call-to-action", "cta_url": "Link til kampagne", "business_name": "Virksomhedsnavn"}'),
+
+('Kontaktbesked', 'CONTACT',
+ 'Ny kontaktforespørgsel fra {{sender_name}}',
+ '<h2>Ny kontaktforespørgsel</h2>
+  <p><strong>Navn:</strong> {{sender_name}}</p>
+  <p><strong>Email:</strong> {{sender_email}}</p>
+  <p><strong>Telefon:</strong> {{sender_phone}}</p>
+  <p><strong>Emne:</strong> {{topic}}</p>
+  <p>{{message_body}}</p>',
+ 'Ny kontaktforespørgsel
+
+Navn: {{sender_name}}
+Email: {{sender_email}}
+Telefon: {{sender_phone}}
+Emne: {{topic}}
+
+{{message_body}}',
+ '{"sender_name": "Afsenders navn", "sender_email": "Afsenders email", "sender_phone": "Telefonnummer", "topic": "Emne", "message_body": "Selve beskeden"}'),
+
+('Intern admin notifikation', 'ADMIN_NOTIFICATION',
+ 'Administrativ hændelse: {{subject}}',
+ '<h2>Administrativ notifikation</h2>
+  <p>{{subject}}</p>
+  <p>{{message_body}}</p>
+  <p><strong>Dato:</strong> {{timestamp}}</p>
+  <p><strong>Detaljer:</strong></p>
+  <pre>{{metadata}}</pre>',
+ 'Administrativ notifikation
+
+{{subject}}
+
+{{message_body}}
+
+Dato: {{timestamp}}
+Detaljer:
+{{metadata}}',
+ '{"subject": "Kort overskrift", "message_body": "Notifikationstekst", "timestamp": "Tidspunkt", "metadata": "Supplerende information"}'),
+
+('Intern staff notifikation', 'STAFF_NOTIFICATION',
+ 'Teamopdatering: {{subject}}',
+ '<h2>Teamopdatering</h2>
+  <p>{{subject}}</p>
+  <p>{{message_body}}</p>
+  <p><strong>Dato:</strong> {{timestamp}}</p>
+  <p>Kontakt admin ved spørgsmål.</p>',
+ 'Teamopdatering
+
+{{subject}}
+
+{{message_body}}
+
+Dato: {{timestamp}}
+Kontakt admin ved spørgsmål.',
+ '{"subject": "Kort overskrift", "message_body": "Notifikationstekst", "timestamp": "Tidspunkt"}');
 
 -- =====================================================
 -- CMS CONTENT
