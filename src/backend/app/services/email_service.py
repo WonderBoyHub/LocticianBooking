@@ -3,9 +3,12 @@ Comprehensive email service for the Loctician Booking System.
 Handles email templating, sending, queuing, and automation workflows.
 """
 import asyncio
+import re
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formataddr
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiosmtplib
@@ -123,6 +126,9 @@ class EmailSender:
         )
         self._brevo_api_client = None
         self._brevo_transactional_api = None
+        self.debug_output_dir = Path(
+            getattr(settings, "EMAIL_DEBUG_OUTPUT_DIR", "./tmp/emails")
+        )
 
     def _get_brevo_client(self):
         """Initialise (or return cached) Brevo transactional email client."""
@@ -203,6 +209,68 @@ class EmailSender:
             )
             return False, error_msg
 
+    def _build_email_message(
+        self,
+        *,
+        to_email: str,
+        to_name: Optional[str],
+        subject: str,
+        html_content: Optional[str],
+        text_content: Optional[str],
+        from_email: str,
+        from_name: Optional[str],
+    ) -> MIMEMultipart:
+        """Create a MIME message for sending or debug output."""
+
+        message = MIMEMultipart("alternative")
+        message["From"] = formataddr((from_name or self.from_name, from_email))
+        message["To"] = formataddr((to_name or "", to_email))
+        message["Subject"] = subject
+
+        if text_content:
+            text_part = MIMEText(text_content, "plain", "utf-8")
+            message.attach(text_part)
+
+        if html_content:
+            html_part = MIMEText(html_content, "html", "utf-8")
+            message.attach(html_part)
+
+        return message
+
+    async def _write_email_to_disk(
+        self,
+        message: MIMEMultipart,
+        *,
+        to_email: str,
+    ) -> Tuple[bool, Optional[str]]:
+        """Persist email content to disk for local testing environments."""
+
+        safe_email = re.sub(r"[^A-Za-z0-9_.-]", "_", to_email)
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+        output_path = self.debug_output_dir / f"{timestamp}_{safe_email}.eml"
+
+        def _write() -> None:
+            self.debug_output_dir.mkdir(parents=True, exist_ok=True)
+            with output_path.open("w", encoding="utf-8") as file_handle:
+                file_handle.write(message.as_string())
+
+        try:
+            await asyncio.to_thread(_write)
+            logger.info(
+                "Email written to debug output",
+                to_email=to_email,
+                path=str(output_path),
+            )
+            return True, str(output_path)
+        except Exception as exc:  # pragma: no cover - filesystem issues are environment specific
+            error_msg = str(exc)
+            logger.error(
+                "Failed to write email to disk",
+                to_email=to_email,
+                error=error_msg,
+            )
+            return False, error_msg
+
     async def send_email(
         self,
         to_email: str,
@@ -214,7 +282,7 @@ class EmailSender:
         from_name: Optional[str] = None,
     ) -> Tuple[bool, Optional[str]]:
         """
-        Send email via SMTP.
+        Send email via configured provider or fall back to local debug output.
 
         Args:
             to_email: Recipient email address
@@ -226,70 +294,70 @@ class EmailSender:
             from_name: Sender name (optional)
 
         Returns:
-            Tuple of (success, error_message)
+            Tuple of (success, provider_message_id_or_error)
         """
         if not html_content and not text_content:
             return False, "No email content provided"
 
+        sender_email = from_email or self.from_email
+        sender_name = from_name or self.from_name
+
+        if not sender_email:
+            logger.error("Sender email not configured")
+            return False, "Sender email not configured"
+
         if self.brevo_api_key:
-            return await self._send_via_brevo(
+            success, provider_id_or_error = await self._send_via_brevo(
                 to_email,
                 to_name,
                 subject,
                 html_content,
                 text_content,
-                from_email,
-                from_name,
+                sender_email,
+                sender_name,
             )
+            return success, provider_id_or_error
 
-        if not self.smtp_host or not self.smtp_user or not self.smtp_password:
-            logger.error("SMTP configuration missing")
-            return False, "SMTP configuration not set"
+        message = self._build_email_message(
+            to_email=to_email,
+            to_name=to_name,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+            from_email=sender_email,
+            from_name=sender_name,
+        )
 
-        try:
-            # Create message
-            message = MIMEMultipart("alternative")
-            message["From"] = f"{from_name or self.from_name} <{from_email or self.from_email}>"
-            message["To"] = f"{to_name} <{to_email}>"
-            message["Subject"] = subject
+        if self.smtp_host and self.smtp_user and self.smtp_password:
+            try:
+                await aiosmtplib.send(
+                    message,
+                    hostname=self.smtp_host,
+                    port=self.smtp_port,
+                    username=self.smtp_user,
+                    password=self.smtp_password,
+                    start_tls=self.smtp_starttls,
+                    use_tls=self.smtp_ssl,
+                )
 
-            # Add text content
-            if text_content:
-                text_part = MIMEText(text_content, "plain", "utf-8")
-                message.attach(text_part)
+                logger.info(
+                    "Email sent successfully",
+                    to_email=to_email,
+                    subject=subject,
+                )
+                return True, None
+            except Exception as exc:  # pragma: no cover - depends on environment
+                error_msg = str(exc)
+                logger.error(
+                    "Email sending failed",
+                    to_email=to_email,
+                    subject=subject,
+                    error=error_msg,
+                )
+                return False, error_msg
 
-            # Add HTML content
-            if html_content:
-                html_part = MIMEText(html_content, "html", "utf-8")
-                message.attach(html_part)
-
-            # Send email via async SMTP
-            await aiosmtplib.send(
-                message,
-                hostname=self.smtp_host,
-                port=self.smtp_port,
-                username=self.smtp_user,
-                password=self.smtp_password,
-                start_tls=self.smtp_starttls,
-                use_tls=self.smtp_ssl,
-            )
-
-            logger.info(
-                "Email sent successfully",
-                to_email=to_email,
-                subject=subject
-            )
-            return True, None
-
-        except Exception as e:
-            error_msg = str(e)
-            logger.error(
-                "Email sending failed",
-                to_email=to_email,
-                subject=subject,
-                error=error_msg
-            )
-            return False, error_msg
+        # Development fallback: write email contents to disk for inspection.
+        return await self._write_email_to_disk(message, to_email=to_email)
 
 
 class EmailService:
@@ -461,12 +529,18 @@ class EmailService:
                     )
 
         # Create queue entry
+        sender_email = from_email or settings.SMTP_FROM
+        sender_name = from_name or settings.SMTP_FROM_NAME
+
+        if not sender_email:
+            raise ValueError("Sender email must be configured before queuing emails")
+
         queue_entry = EmailQueue(
             template_id=template_id,
             to_email=to_email,
             to_name=to_name,
-            from_email=from_email or settings.SMTP_FROM,
-            from_name=from_name or settings.SMTP_FROM_NAME,
+            from_email=sender_email,
+            from_name=sender_name,
             subject=subject,
             html_content=final_html_content,
             text_content=final_text_content,
@@ -533,7 +607,7 @@ class EmailService:
                 await session.commit()
 
                 # Send email
-                success, error_message = await self.sender.send_email(
+                success, provider_or_error = await self.sender.send_email(
                     to_email=email.to_email,
                     to_name=email.to_name,
                     subject=email.subject,
@@ -544,10 +618,10 @@ class EmailService:
                 )
 
                 if success:
-                    email.mark_sent()
+                    email.mark_sent(provider_message_id=provider_or_error)
                     processed_count += 1
                 else:
-                    email.mark_failed(error_message or "Unknown error")
+                    email.mark_failed(provider_or_error or "Unknown error")
 
                 await session.commit()
 

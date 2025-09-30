@@ -80,12 +80,13 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
-    SMTP_FROM: Optional[str] = None
+    SMTP_FROM: str = "no-reply@locticianbooking.local"
     SMTP_FROM_NAME: str = "Loctician Booking"
     SMTP_STARTTLS: bool = True
     SMTP_SSL: bool = False
     BREVO_API_KEY: Optional[str] = None
     BREVO_API_BASE_URL: str = "https://api.brevo.com/v3"
+    EMAIL_DEBUG_OUTPUT_DIR: str = "./tmp/emails"
 
     # File Upload
     MAX_FILE_SIZE_MB: int = 10
