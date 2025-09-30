@@ -6,6 +6,7 @@ from typing import Dict
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.auth import auth_service
@@ -150,7 +151,7 @@ async def register(
         )
 
         # Queue verification email
-        await db.execute(
+        result = await db.execute(
             """
             INSERT INTO email_queue (
                 template_id, to_email, to_name, from_email, from_name,
@@ -161,7 +162,7 @@ async def register(
                 'Welcome - Please Verify Your Email',
                 :variables::jsonb, :user_id
             FROM email_templates et
-            WHERE et.template_type = 'welcome' AND et.is_active = TRUE
+            WHERE et.template_type::text = 'welcome' AND et.is_active = TRUE
             LIMIT 1
             """,
             {
@@ -171,6 +172,13 @@ async def register(
                 "user_id": user_id
             }
         )
+
+        if getattr(result, "rowcount", 0) == 0:
+            logger.warning(
+                "Welcome email template not queued",
+                reason="template_not_found",
+                email=registration_data.email
+            )
 
         await db.commit()
 
@@ -332,8 +340,14 @@ async def request_password_reset(
             )
 
             # Queue password reset email
-            await db.execute(
-                """
+            user_full_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or user.email
+            user_first_name = user.first_name or user.email.split('@')[0]
+
+            import json
+            variables_json = json.dumps({"reset_token": reset_token, "user_name": user_first_name})
+
+            result = await db.execute(
+                text("""
                 INSERT INTO email_queue (
                     template_id, to_email, to_name, from_email, from_name,
                     subject, template_variables, user_id
@@ -343,17 +357,24 @@ async def request_password_reset(
                     'Password Reset Request',
                     :variables::jsonb, :user_id
                 FROM email_templates et
-                WHERE et.template_type = 'password_reset' AND et.is_active = TRUE
+                WHERE et.template_type = 'PASSWORD_RESET'::templatetype AND et.is_active = TRUE
                 LIMIT 1
-                """,
+                """),
                 {
                     "email": user.email,
-                    "name": user.full_name,
-                    "variables": f'{{"reset_token": "{reset_token}", "user_name": "{user.first_name}"}}',
-                    "user_id": user.id
+                    "name": user_full_name,
+                    "variables": variables_json,
+                    "user_id": str(user.id)
                 }
             )
             await db.commit()
+
+            if getattr(result, "rowcount", 0) == 0:
+                logger.warning(
+                    "Password reset email template not queued",
+                    reason="template_not_found",
+                    email=reset_data.email
+                )
 
             logger.info("Password reset requested", email=reset_data.email)
 
@@ -361,10 +382,14 @@ async def request_password_reset(
         return {"message": "If the email exists, a password reset link has been sent"}
 
     except Exception as e:
-        logger.error("Password reset request error", error=str(e))
+        import traceback
+        error_traceback = traceback.format_exc()
+        logger.error("Password reset request error", error=str(e), traceback=error_traceback)
+        print(f"ERROR in password reset: {str(e)}")
+        print(error_traceback)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password reset request failed"
+            detail=f"Password reset request failed: {str(e)}"
         )
 
 

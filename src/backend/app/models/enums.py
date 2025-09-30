@@ -71,6 +71,7 @@ class TemplateType(str, enum.Enum):
     REMINDER = "reminder"
     CANCELLATION = "cancellation"
     WELCOME = "welcome"
+    PASSWORD_RESET = "password_reset"
     MARKETING = "marketing"
     INVOICE = "invoice"
 

@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     CSRF_PROTECTION_ENABLED: bool = True
 
     # CORS
+    FRONTEND_URL: str = "http://localhost:3001"
     BACKEND_CORS_ORIGINS: str = "http://localhost:3001"
 
     @property

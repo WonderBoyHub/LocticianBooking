@@ -465,7 +465,15 @@ CREATE TABLE instagram_posts (
 -- =====================================================
 
 -- Email templates
-CREATE TYPE template_type AS ENUM ('booking_confirmation', 'reminder', 'cancellation', 'welcome', 'marketing', 'invoice');
+CREATE TYPE template_type AS ENUM (
+    'booking_confirmation',
+    'reminder',
+    'cancellation',
+    'welcome',
+    'password_reset',
+    'marketing',
+    'invoice'
+);
 
 CREATE TABLE email_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

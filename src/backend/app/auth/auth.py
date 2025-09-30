@@ -338,7 +338,8 @@ class AuthService:
 
         # Convert row to User object (simplified)
         user = User()
-        for column, value in user_data._mapping.items():
+        user_dict = dict(user_data._mapping)
+        for column, value in user_dict.items():
             setattr(user, column, value)
 
         return user
