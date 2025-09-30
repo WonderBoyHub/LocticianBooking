@@ -1,4 +1,5 @@
-"""Pydantic schemas for media library files."""
+"""Pydantic schemas for media assets exposed via the CMS API."""
+
 from datetime import datetime
 from typing import List, Optional
 

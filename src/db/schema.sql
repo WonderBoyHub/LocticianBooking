@@ -377,6 +377,30 @@ CREATE TABLE booking_state_changes (
 -- Page types
 CREATE TYPE page_type AS ENUM ('page', 'blog_post', 'service_page', 'product_page', 'landing_page');
 
+-- Media library
+CREATE TABLE media_files (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    alt_text TEXT,
+    caption TEXT,
+    is_featured BOOLEAN DEFAULT FALSE,
+    display_order INTEGER DEFAULT 0,
+    is_published BOOLEAN DEFAULT TRUE,
+    published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    uploaded_by UUID REFERENCES users(id),
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_media_files_featured ON media_files (is_featured, display_order)
+WHERE is_featured = TRUE AND is_published = TRUE;
+
 -- CMS pages
 CREATE TABLE cms_pages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -407,30 +431,6 @@ CREATE TABLE cms_pages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Media library
-CREATE TABLE media_files (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    filename VARCHAR(255) NOT NULL,
-    original_filename VARCHAR(255) NOT NULL,
-    file_path TEXT NOT NULL,
-    file_size INTEGER NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    width INTEGER,
-    height INTEGER,
-    alt_text TEXT,
-    caption TEXT,
-    is_featured BOOLEAN DEFAULT FALSE,
-    display_order INTEGER DEFAULT 0,
-    is_published BOOLEAN DEFAULT TRUE,
-    published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-    uploaded_by UUID REFERENCES users(id),
-    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX idx_media_files_featured ON media_files (is_featured, display_order)
-WHERE is_featured = TRUE AND is_published = TRUE;
 
 -- =====================================================
 -- INSTAGRAM INTEGRATION

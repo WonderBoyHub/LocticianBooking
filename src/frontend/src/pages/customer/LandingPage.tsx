@@ -116,6 +116,15 @@ export const LandingPage: React.FC = () => {
 
     return instagramResponse.data.map(mapInstagramPostDto).slice(0, 9);
   }, [instagramResponse]);
+  const instagramPlaceholders = React.useMemo(
+    () =>
+      Array.from({ length: 9 }).map((_, index) => ({
+        id: `placeholder-${index}`,
+        image: `https://picsum.photos/400/400?random=${index + 31}`,
+        caption: 'Instagram inspiration fra Lorem Picsum',
+      })),
+    []
+  );
 
   const mediaItems = React.useMemo<MediaAsset[]>(() => mediaResponse ?? [], [mediaResponse]);
 
@@ -201,38 +210,44 @@ export const LandingPage: React.FC = () => {
                   <div className="rounded-md border border-dashed border-brand-primary/40 bg-white/60 p-4 text-sm text-brand-dark/80">
                     Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
                   </div>
-                ) : instagramPosts.length ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {instagramPosts.map((post) => (
-                      <a
-                        key={post.id}
-                        href={post.permalink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative block aspect-square overflow-hidden rounded-md shadow-sm"
-                      >
-                        <img
-                          src={post.thumbnailUrl ?? post.mediaUrl ?? 'https://picsum.photos/400/400'}
-                          alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs">
-                          <p
-                            className="leading-snug text-white/90 overflow-hidden text-ellipsis"
-                            style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
-                          >
-                            {post.caption ?? 'Se opslaget på Instagram'}
-                          </p>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
                 ) : (
-                  <div className="rounded-md border border-dashed border-brand-primary/40 bg-white/60 p-4 text-sm text-brand-dark/80">
-                    Ingen Instagram-opslag er fremhævet endnu.
-                  </div>
+                  (instagramPosts.length ? instagramPosts : instagramPlaceholders).length ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {(instagramPosts.length ? instagramPosts : instagramPlaceholders).map((post) => (
+                        <a
+                          key={post.id}
+                          href={'permalink' in post ? post.permalink : 'https://instagram.com/justloccit'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative block aspect-square overflow-hidden rounded-md shadow-sm"
+                        >
+                          <img
+                            src={
+                              'mediaUrl' in post
+                                ? post.thumbnailUrl ?? post.mediaUrl ?? `https://picsum.photos/400/400?random=${post.displayOrder ?? 90}`
+                                : post.image
+                            }
+                            alt={
+                              'caption' in post && post.caption
+                                ? post.caption.slice(0, 80)
+                                : 'Instagram inspiration'
+                            }
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                          <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs">
+                            <p
+                              className="leading-snug text-white/90 overflow-hidden text-ellipsis"
+                              style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                            >
+                              {'caption' in post && post.caption ? post.caption : 'Følg med på Instagram'}
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  ) : null
                 )}
               </div>
 
@@ -475,57 +490,65 @@ export const LandingPage: React.FC = () => {
             <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
               Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
             </div>
-          ) : instagramPosts.length ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
-              {instagramPosts.map((post, index) => (
-                <motion.a
-                  key={post.id}
-                  href={post.permalink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative aspect-square overflow-hidden rounded-xl shadow-soft"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <img
-                    src={post.thumbnailUrl ?? post.mediaUrl ?? 'https://picsum.photos/600/600'}
-                    alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <p
-                      className="text-sm font-medium text-white overflow-hidden text-ellipsis"
-                      style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
-                    >
-                      {post.caption ?? 'Se opslaget på Instagram'}
-                    </p>
-                    <div className="mt-3 flex items-center gap-4 text-xs text-white/80">
-                      <span className="flex items-center gap-1">
-                        <Heart className="h-4 w-4" />
-                        {post.likesCount}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="h-4 w-4" />
-                        {post.commentsCount}
-                      </span>
-                    </div>
-                  </div>
-                </motion.a>
-              ))}
-            </motion.div>
           ) : (
-            <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
-              Ingen Instagram-opslag er fremhævet endnu. Tjek igen senere for nye transformationer.
-            </div>
+            (instagramPosts.length ? instagramPosts : instagramPlaceholders).length ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              >
+                {(instagramPosts.length ? instagramPosts : instagramPlaceholders).map((post, index) => (
+                  <motion.a
+                    key={post.id}
+                    href={'permalink' in post ? post.permalink : 'https://instagram.com/justloccit'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative aspect-square overflow-hidden rounded-xl shadow-soft"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <img
+                      src={
+                        'mediaUrl' in post
+                          ? post.thumbnailUrl ?? post.mediaUrl ?? `https://picsum.photos/600/600?random=${index + 51}`
+                          : post.image
+                      }
+                      alt={
+                        'caption' in post && post.caption
+                          ? post.caption.slice(0, 80)
+                          : 'Instagram inspiration'
+                      }
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                      <p
+                        className="text-sm font-medium text-white overflow-hidden text-ellipsis"
+                        style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                      >
+                        {'caption' in post && post.caption ? post.caption : 'Få et glimt af vores kommende indhold'}
+                      </p>
+                      {'likesCount' in post ? (
+                        <div className="mt-3 flex items-center gap-4 text-xs text-white/80">
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-4 w-4" />
+                            {post.likesCount}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="h-4 w-4" />
+                            {post.commentsCount}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </motion.a>
+                ))}
+              </motion.div>
+            ) : null
           )}
         </div>
       </section>

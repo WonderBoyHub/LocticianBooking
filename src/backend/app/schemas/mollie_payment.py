@@ -3,11 +3,11 @@ Mollie Payment API schemas based on official Mollie API documentation.
 https://docs.mollie.com/reference/overview
 """
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 # Core Mollie Payment Models
@@ -16,14 +16,14 @@ class MollieAmount(BaseModel):
     currency: str = Field(..., description="Three-letter ISO currency code")
     value: str = Field(..., description="Amount as string with exactly 2 decimals")
 
-    @validator('currency')
-    def validate_currency(cls, v):
+    @field_validator('currency')
+    def validate_currency(cls, v: str) -> str:
         if len(v) != 3:
             raise ValueError('Currency must be exactly 3 characters')
         return v.upper()
 
-    @validator('value')
-    def validate_value(cls, v):
+    @field_validator('value')
+    def validate_value(cls, v: str) -> str:
         try:
             amount = Decimal(v)
             if amount < 0:
@@ -31,7 +31,7 @@ class MollieAmount(BaseModel):
             # Check decimal places
             if '.' in v and len(v.split('.')[1]) != 2:
                 raise ValueError('Amount must have exactly 2 decimal places')
-        except (ValueError, decimal.InvalidOperation):
+        except (ValueError, InvalidOperation):
             raise ValueError('Invalid amount format')
         return v
 
@@ -78,8 +78,8 @@ class MolliePaymentCreate(BaseModel):
     # Due date for bank transfers
     dueDate: Optional[str] = Field(None, description="Due date for bank transfer")
 
-    @validator('sequenceType')
-    def validate_sequence_type(cls, v):
+    @field_validator('sequenceType')
+    def validate_sequence_type(cls, v: Optional[str]) -> Optional[str]:
         if v and v not in ['oneoff', 'first', 'recurring']:
             raise ValueError('Invalid sequence type')
         return v
@@ -170,8 +170,8 @@ class MollieSubscriptionCreate(BaseModel):
     webhookUrl: Optional[str] = Field(None, description="Webhook URL")
     metadata: Optional[Dict[str, Any]] = None
 
-    @validator('interval')
-    def validate_interval(cls, v):
+    @field_validator('interval')
+    def validate_interval(cls, v: str) -> str:
         # Validate interval format (e.g., "1 month", "2 weeks")
         parts = v.split()
         if len(parts) != 2:
@@ -180,7 +180,8 @@ class MollieSubscriptionCreate(BaseModel):
             int(parts[0])
         except ValueError:
             raise ValueError('Interval must start with a number')
-        if parts[1] not in ['days', 'weeks', 'months']:
+        valid_periods = {'day', 'days', 'week', 'weeks', 'month', 'months'}
+        if parts[1] not in valid_periods:
             raise ValueError('Interval period must be days, weeks, or months')
         return v
 
@@ -212,8 +213,8 @@ class MollieWebhookPayload(BaseModel):
     """Webhook payload from Mollie."""
     id: str
 
-    @validator('id')
-    def validate_id(cls, v):
+    @field_validator('id')
+    def validate_id(cls, v: str) -> str:
         if not v.startswith(('tr_', 'sub_', 'ord_', 'chb_', 'rf_')):
             raise ValueError('Invalid Mollie ID format')
         return v
@@ -229,8 +230,8 @@ class MollieMandateCreate(BaseModel):
     signatureDate: Optional[str] = Field(None, description="Signature date")
     mandateReference: Optional[str] = Field(None, description="Mandate reference")
 
-    @validator('method')
-    def validate_method(cls, v):
+    @field_validator('method')
+    def validate_method(cls, v: str) -> str:
         if v not in ['directdebit', 'creditcard', 'paypal']:
             raise ValueError('Invalid mandate method')
         return v

@@ -26,9 +26,98 @@ import type {
 // Define the API base URL
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
+const placeholderImage = 'https://picsum.photos/800/600?random=1';
+
+const slugify = (value: string): string =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '') || 'item';
+
+const buildMediaUrl = (value?: string | null): string => {
+  if (!value) {
+    return placeholderImage;
+  }
+
+  if (value.startsWith('http')) {
+    return value;
+  }
+
+  if (value.startsWith('/')) {
+    return value;
+  }
+
+  return `/media/${value.replace(/^\//, '')}`;
+};
+
+const mapServiceCategory = (item: any): ServiceCategory => ({
+  id: item.id,
+  name: item.name,
+  nameEn: item.name_en ?? item.nameEn ?? undefined,
+  slug: item.slug ?? slugify(item.name ?? `category-${item.id}`),
+  description: item.description ?? item.description_da ?? '',
+  descriptionEn: item.description_en ?? item.descriptionEn ?? undefined,
+  order: item.display_order ?? item.order ?? 0,
+  isActive: item.is_active ?? item.isActive ?? true,
+});
+
+const mapService = (item: any): Service => {
+  const categoryId = item.category_id ?? item.categoryId ?? null;
+  const categoryName = item.category_name ?? item.categoryName ?? item.category?.name ?? null;
+  const category = categoryId
+    ? mapServiceCategory({
+        id: categoryId,
+        name: categoryName ?? 'Service',
+        slug: item.category_slug ?? undefined,
+        description: item.category_description ?? item.category?.description ?? '',
+        display_order: item.category_display_order ?? item.category?.display_order ?? 0,
+        is_active: item.category_is_active ?? item.category?.is_active ?? true,
+        name_en: item.category_name_en ?? item.category?.name_en ?? undefined,
+        description_en: item.category_description_en ?? item.category?.description_en ?? undefined,
+      })
+    : null;
+
+  const durationMinutes = item.duration_minutes ?? item.duration ?? 0;
+  const priceValue = item.base_price ?? item.price ?? 0;
+
+  return {
+    id: item.id,
+    name: item.name,
+    nameEn: item.name_en ?? item.nameEn ?? undefined,
+    description: item.description ?? '',
+    descriptionEn: item.description_en ?? item.descriptionEn ?? undefined,
+    duration: durationMinutes,
+    price: typeof priceValue === 'string' ? parseFloat(priceValue) : Number(priceValue),
+    category,
+    isActive: item.is_active ?? item.isActive ?? true,
+    images: Array.isArray(item.images) ? item.images : [],
+    requirements: Array.isArray(item.requirements) ? item.requirements : [],
+    aftercare: Array.isArray(item.aftercare) ? item.aftercare : [],
+    locticianId: item.loctician_id ?? item.locticianId ?? undefined,
+    createdAt: item.created_at ?? item.createdAt ?? new Date().toISOString(),
+    updatedAt: item.updated_at ?? item.updatedAt ?? item.created_at ?? new Date().toISOString(),
+  };
+};
+
+const serializeServicePayload = (serviceData: Partial<Service>): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+
+  if (serviceData.name !== undefined) payload.name = serviceData.name;
+  if (serviceData.nameEn !== undefined) payload.name_en = serviceData.nameEn;
+  if (serviceData.description !== undefined) payload.description = serviceData.description;
+  if (serviceData.descriptionEn !== undefined) payload.description_en = serviceData.descriptionEn;
+  if (serviceData.duration !== undefined) payload.duration_minutes = serviceData.duration;
+  if (serviceData.price !== undefined) payload.base_price = serviceData.price;
+  if (serviceData.category?.id) payload.category_id = serviceData.category.id;
+  if (serviceData.isActive !== undefined) payload.is_active = serviceData.isActive;
+
+  return payload;
+};
+
 const mapMediaAsset = (item: any): MediaAsset => ({
   id: item.id,
-  url: item.url ?? item.public_url ?? item.media_url ?? item.file_path,
+  url: buildMediaUrl(item.url ?? item.public_url ?? item.media_url ?? item.file_path),
   originalFilename: item.original_filename,
   mimeType: item.mime_type,
   fileSize: item.file_size,
@@ -172,15 +261,39 @@ export const api = createApi({
       ApiResponse<Service[]>,
       { categoryId?: string; locticianId?: string; isActive?: boolean }
     >({
-      query: (params) => ({
-        url: '/services',
-        params,
+      query: (params) => {
+        const queryParams: Record<string, unknown> = {};
+
+        if (params?.categoryId) {
+          queryParams.category_id = params.categoryId;
+        }
+
+        if (params?.locticianId) {
+          queryParams.loctician_id = params.locticianId;
+        }
+
+        if (typeof params?.isActive === 'boolean') {
+          queryParams.include_inactive = !params.isActive;
+        }
+
+        return {
+          url: '/services',
+          params: queryParams,
+        };
+      },
+      transformResponse: (response: any): ApiResponse<Service[]> => ({
+        data: Array.isArray(response) ? response.map(mapService) : [],
+        success: true,
       }),
       providesTags: ['Service'],
     }),
 
     getService: builder.query<ApiResponse<Service>, string>({
       query: (id) => `/services/${id}`,
+      transformResponse: (response: any): ApiResponse<Service> => ({
+        data: mapService(response),
+        success: true,
+      }),
       providesTags: (result, error, id) => [{ type: 'Service', id }],
     }),
 
@@ -188,7 +301,11 @@ export const api = createApi({
       query: (serviceData) => ({
         url: '/services',
         method: 'POST',
-        body: serviceData,
+        body: serializeServicePayload(serviceData),
+      }),
+      transformResponse: (response: any): ApiResponse<Service> => ({
+        data: mapService(response),
+        success: true,
       }),
       invalidatesTags: ['Service'],
     }),
@@ -200,7 +317,11 @@ export const api = createApi({
       query: ({ id, data }) => ({
         url: `/services/${id}`,
         method: 'PUT',
-        body: data,
+        body: serializeServicePayload(data),
+      }),
+      transformResponse: (response: any): ApiResponse<Service> => ({
+        data: mapService(response),
+        success: true,
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Service', id }],
     }),
@@ -215,7 +336,13 @@ export const api = createApi({
 
     // Service categories
     getServiceCategories: builder.query<ApiResponse<ServiceCategory[]>, void>({
-      query: () => '/service-categories',
+      query: () => '/services/categories',
+      transformResponse: (response: any): ApiResponse<ServiceCategory[]> => ({
+        data: Array.isArray(response)
+          ? response.map((item: any) => mapServiceCategory(item))
+          : [],
+        success: true,
+      }),
       providesTags: ['ServiceCategory'],
     }),
 

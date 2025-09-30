@@ -169,7 +169,41 @@
     "media": {
       "title": "Gallery & inspiration",
       "subtitle": "Browse highlighted photos and videos from recent appointments.",
+      "placeholderSubtitle": "We are showcasing temporary inspiration from Lorem Picsum until your gallery is ready.",
+      "placeholderNotice": "Images above are placeholders from Lorem Picsum and will automatically be replaced once you upload your own content or connect the Instagram feed.",
       "videoBadge": "Video"
+    },
+    "products": {
+      "title": "Care products & bundles",
+      "subtitle": "Complement your appointment with curated, salon-approved products available through our consultation.",
+      "cta": "Plan product consult",
+      "hydration": {
+        "title": "Intense moisture boost",
+        "description": "Ideal if you want soft, nourished locs between maintenance visits.",
+        "items": [
+          "Hydrating shampoo free from sulfates",
+          "Deep conditioning aloe & shea leave-in",
+          "Silky night-time oil blend"
+        ]
+      },
+      "starter": {
+        "title": "Starter locs essentials",
+        "description": "Supports the beginning of your loc journey with gentle, nurturing care.",
+        "items": [
+          "Soothing scalp toner",
+          "Lightweight retwist cream",
+          "Protective satin bonnet for overnight care"
+        ]
+      },
+      "styling": {
+        "title": "Styling & finishing",
+        "description": "Add shine and hold for special occasions or photoshoots.",
+        "items": [
+          "Natural shine spray",
+          "Flake-free edge control options",
+          "Seasonal decorative accessories"
+        ]
+      }
     }
   },
   "legal": {

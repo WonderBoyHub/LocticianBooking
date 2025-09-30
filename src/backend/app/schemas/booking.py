@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import BookingStatus, PaymentStatus
 
@@ -89,8 +89,8 @@ class BookingCreate(BookingBase):
         default=[], description="Additional products"
     )
 
-    @validator("appointment_start")
-    def validate_appointment_time(cls, v):
+    @field_validator("appointment_start")
+    def validate_appointment_time(cls, v: datetime) -> datetime:
         if v <= datetime.utcnow():
             raise ValueError("Appointment must be in the future")
         return v
@@ -103,8 +103,8 @@ class BookingUpdate(BookingBase):
     loctician_notes: Optional[str] = Field(None, description="Loctician notes")
     admin_notes: Optional[str] = Field(None, description="Admin notes")
 
-    @validator("appointment_start")
-    def validate_appointment_time(cls, v):
+    @field_validator("appointment_start")
+    def validate_appointment_time(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v and v <= datetime.utcnow():
             raise ValueError("Appointment must be in the future")
         return v
@@ -245,8 +245,8 @@ class AvailabilityCheck(BaseModel):
     service_duration: int = Field(..., ge=1, description="Service duration in minutes")
     slot_interval: int = Field(default=30, ge=15, description="Slot interval in minutes")
 
-    @validator("date")
-    def validate_date_format(cls, v):
+    @field_validator("date")
+    def validate_date_format(cls, v: str) -> str:
         try:
             datetime.strptime(v, "%Y-%m-%d")
             return v

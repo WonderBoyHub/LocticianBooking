@@ -26,29 +26,29 @@ export interface UserPreferences {
 export interface Service {
   id: string;
   name: string;
-  nameEn?: string;
+  nameEn?: string | null;
   description: string;
-  descriptionEn?: string;
+  descriptionEn?: string | null;
   duration: number; // in minutes
   price: number;
-  category: ServiceCategory;
+  category?: ServiceCategory | null;
   isActive: boolean;
   images?: string[];
   requirements?: string[];
   aftercare?: string[];
-  locticianId: string;
-  createdAt: string;
-  updatedAt: string;
+  locticianId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ServiceCategory {
   id: string;
   name: string;
-  nameEn?: string;
-  slug: string;
+  nameEn?: string | null;
+  slug?: string;
   description?: string;
-  descriptionEn?: string;
-  order: number;
+  descriptionEn?: string | null;
+  order?: number;
   isActive: boolean;
 }
 

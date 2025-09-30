@@ -4,7 +4,7 @@ Service and service category schema definitions.
 from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 # Service Category Schemas
@@ -66,8 +66,8 @@ class ServiceBase(BaseModel):
     meta_title: Optional[str] = Field(None, max_length=200)
     meta_description: Optional[str] = None
 
-    @validator('slug')
-    def validate_slug(cls, v):
+    @field_validator('slug')
+    def validate_slug(cls, v: Optional[str]):
         if v is not None:
             # Simple slug validation - only lowercase, numbers, and hyphens
             import re
@@ -102,8 +102,8 @@ class ServiceUpdate(BaseModel):
     meta_title: Optional[str] = Field(None, max_length=200)
     meta_description: Optional[str] = None
 
-    @validator('slug')
-    def validate_slug(cls, v):
+    @field_validator('slug')
+    def validate_slug(cls, v: Optional[str]):
         if v is not None:
             import re
             if not re.match(r'^[a-z0-9-]+$', v):

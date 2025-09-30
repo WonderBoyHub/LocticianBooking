@@ -146,12 +146,26 @@ const ServicesGrid: React.FC<{
   );
 };
 
+const createPlaceholderMedia = (count: number): MediaAsset[] =>
+  Array.from({ length: count }).map((_, index) => ({
+    id: `placeholder-media-${index}`,
+    url: `https://picsum.photos/600/400?random=${index + 1}`,
+    originalFilename: 'placeholder.jpg',
+    mimeType: 'image/jpeg',
+    fileSize: 0,
+    altText: 'Inspiration billede',
+    caption: index % 2 === 0 ? 'Placeholder inspiration fra Just Locc It' : undefined,
+    isFeatured: false,
+    displayOrder: index,
+    isPublished: true,
+    publishedAt: new Date().toISOString(),
+  }));
+
 const MediaSpotlight: React.FC<{ media: MediaAsset[] }> = ({ media }) => {
   const { t } = useTranslation();
-
-  if (!media.length) {
-    return null;
-  }
+  const fallbackMedia = React.useMemo(() => createPlaceholderMedia(6), []);
+  const hasMedia = media.length > 0;
+  const items = hasMedia ? media : fallbackMedia;
 
   return (
     <section className="mt-16">
@@ -164,44 +178,144 @@ const MediaSpotlight: React.FC<{ media: MediaAsset[] }> = ({ media }) => {
             {t('services.media.title')}
           </h2>
           <p className="text-sm text-gray-600">
-            {t('services.media.subtitle')}
+            {hasMedia ? t('services.media.subtitle') : t('services.media.placeholderSubtitle')}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {media.map((item) => (
-          <motion.figure
-            key={item.id}
-            whileHover={{ scale: 1.02 }}
-            className="relative overflow-hidden rounded-2xl shadow-soft border border-brown-100"
+        {items.map((item) => {
+          const isVideo = item.mimeType?.startsWith('video/');
+          return (
+            <motion.figure
+              key={item.id}
+              whileHover={{ scale: 1.02 }}
+              className="relative overflow-hidden rounded-2xl shadow-soft border border-brown-100"
+            >
+              {isVideo ? (
+                <video
+                  src={item.url}
+                  controls
+                  className="w-full h-64 object-cover"
+                />
+              ) : (
+                <img
+                  src={item.url || `https://picsum.photos/600/400?random=${item.displayOrder + 10}`}
+                  alt={item.altText ?? item.originalFilename}
+                  className="w-full h-64 object-cover"
+                  loading="lazy"
+                />
+              )}
+              {item.caption ? (
+                <figcaption className="p-4 text-sm text-gray-700 bg-white/90">
+                  {item.caption}
+                </figcaption>
+              ) : null}
+              {isVideo ? (
+                <div className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                  <Play className="w-3.5 h-3.5" />
+                  {t('services.media.videoBadge')}
+                </div>
+              ) : null}
+            </motion.figure>
+          );
+        })}
+      </div>
+
+      {!hasMedia ? (
+        <p className="mt-4 text-xs text-gray-500 text-center">
+          {t('services.media.placeholderNotice')}
+        </p>
+      ) : null}
+    </section>
+  );
+};
+
+const ProductHighlights: React.FC = () => {
+  const { t } = useTranslation();
+  const bundles = React.useMemo(
+    () => {
+      const hydrationItems = t('services.products.hydration.items', { returnObjects: true }) as string[];
+      const starterItems = t('services.products.starter.items', { returnObjects: true }) as string[];
+      const stylingItems = t('services.products.styling.items', { returnObjects: true }) as string[];
+
+      return [
+        {
+          id: 'hydration',
+          title: t('services.products.hydration.title'),
+          description: t('services.products.hydration.description'),
+          image: 'https://picsum.photos/600/400?random=21',
+          items: hydrationItems,
+        },
+        {
+          id: 'starter',
+          title: t('services.products.starter.title'),
+          description: t('services.products.starter.description'),
+          image: 'https://picsum.photos/600/400?random=22',
+          items: starterItems,
+        },
+        {
+          id: 'styling',
+          title: t('services.products.styling.title'),
+          description: t('services.products.styling.description'),
+          image: 'https://picsum.photos/600/400?random=23',
+          items: stylingItems,
+        },
+      ];
+    },
+    [t]
+  );
+
+  return (
+    <section className="mt-20">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl font-serif font-bold text-brand-dark">
+          {t('services.products.title')}
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          {t('services.products.subtitle')}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {bundles.map((bundle, index) => (
+          <motion.article
+            key={bundle.id}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-white rounded-2xl shadow-soft border border-brown-100 overflow-hidden flex flex-col"
           >
-            {item.mimeType.startsWith('video/') ? (
-              <video
-                src={item.url}
-                controls
-                className="w-full h-64 object-cover"
-              />
-            ) : (
-              <img
-                src={item.url || 'https://picsum.photos/600/400'}
-                alt={item.altText ?? item.originalFilename}
-                className="w-full h-64 object-cover"
-                loading="lazy"
-              />
-            )}
-            {item.caption ? (
-              <figcaption className="p-4 text-sm text-gray-700 bg-white/90">
-                {item.caption}
-              </figcaption>
-            ) : null}
-            {item.mimeType.startsWith('video/') ? (
-              <div className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
-                <Play className="w-3.5 h-3.5" />
-                {t('services.media.videoBadge')}
-              </div>
-            ) : null}
-          </motion.figure>
+            <img
+              src={bundle.image}
+              alt={bundle.title}
+              className="h-48 w-full object-cover"
+              loading="lazy"
+            />
+            <div className="p-6 flex-1 flex flex-col">
+              <h3 className="text-xl font-semibold text-brand-dark">
+                {bundle.title}
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                {bundle.description}
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-gray-600 list-disc list-inside">
+                {bundle.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="px-6 pb-6">
+              <Link
+                to="/tjenester"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-primary text-brand-primary px-4 py-2 text-sm font-medium hover:bg-brand-primary hover:text-white transition"
+              >
+                {t('services.products.cta')}
+                <ArrowRightCircle className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.article>
         ))}
       </div>
     </section>
@@ -300,6 +414,8 @@ export const ServicesCatalogPage: React.FC = () => {
         )}
 
         <MediaSpotlight media={mediaItems} />
+
+        <ProductHighlights />
       </div>
     </div>
   );
