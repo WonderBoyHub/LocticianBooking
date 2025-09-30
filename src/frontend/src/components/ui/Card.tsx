@@ -71,18 +71,20 @@ export const Card: React.FC<CardProps> = ({
     className
   );
 
-  const CardComponent = onClick ? motion.div : 'div';
+  if (onClick) {
+    return (
+      <motion.div
+        className={cardClasses}
+        onClick={onClick}
+        whileHover={hover ? { scale: 1.02 } : undefined}
+        whileTap={hover ? { scale: 0.98 } : undefined}
+      >
+        {children}
+      </motion.div>
+    );
+  }
 
-  return (
-    <CardComponent
-      className={cardClasses}
-      onClick={onClick}
-      whileHover={hover && onClick ? { scale: 1.02 } : undefined}
-      whileTap={hover && onClick ? { scale: 0.98 } : undefined}
-    >
-      {children}
-    </CardComponent>
-  );
+  return <div className={cardClasses}>{children}</div>;
 };
 
 export interface CardHeaderProps {
