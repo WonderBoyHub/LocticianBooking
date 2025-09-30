@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from jose import JWTError, jwk, jwt
 from jose.exceptions import JWTClaimsError, JWKError
 from passlib.context import CryptContext
-from sqlalchemy import text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.jwks import JWKSClient, JWKSClientError
@@ -201,6 +201,120 @@ class AuthService:
         return payload
 
     @staticmethod
+    def _normalise_auth_result(value: Any) -> Optional[Dict[str, Any]]:
+        """Convert authentication results from SQL into dictionaries."""
+
+        if value is None:
+            return None
+
+        if isinstance(value, dict):
+            return value
+
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                return {"success": False, "error": value}
+
+        return None
+
+    @staticmethod
+    def _should_use_fallback(auth_result: Optional[Dict[str, Any]]) -> bool:
+        """Decide whether to use application-side authentication logic."""
+
+        if not auth_result:
+            return True
+
+        success = auth_result.get("success")
+        if success is None:
+            return True
+
+        if success is True:
+            return not {"user_id", "role"}.issubset(auth_result.keys())
+
+        error_value = str(auth_result.get("error", "")).upper()
+        if "INVALID_CREDENTIAL" in error_value or "ACCOUNT_LOCKED" in error_value:
+            return False
+
+        if "SYSTEM" in error_value or "FUNCTION" in error_value or "DATABASE" in error_value:
+            return True
+
+        message_value = str(auth_result.get("message", "")).upper()
+        return "SYSTEM" in message_value or "FUNCTION" in message_value
+
+    @staticmethod
+    def _build_auth_payload(user: User) -> Dict[str, Any]:
+        """Create a consistent payload structure from a user model."""
+
+        role_value = user.role.value if isinstance(user.role, UserRole) else user.role
+        return {
+            "success": True,
+            "user_id": str(user.id),
+            "email": user.email,
+            "role": role_value,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_verified": bool(getattr(user, "email_verified", False)),
+        }
+
+    @staticmethod
+    async def _authenticate_user_application(
+        db: AsyncSession,
+        *,
+        email: str,
+        password: str,
+        ip_address: str,
+        user_agent: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Fallback authenticator that validates credentials against the users table."""
+
+        normalised_email = email.strip().lower()
+
+        result = await db.execute(
+            select(User).where(func.lower(User.email) == normalised_email)
+        )
+        user: Optional[User] = result.scalar_one_or_none()
+
+        if not user or user.status != UserStatus.ACTIVE:
+            logger.info(
+                "Fallback authentication failed - missing or inactive user",
+                email=email,
+                ip_address=ip_address,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+
+        if not AuthService.verify_password(password, user.password_hash):
+            logger.info(
+                "Fallback authentication failed - password mismatch",
+                email=email,
+                ip_address=ip_address,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+
+        await db.execute(
+            update(User)
+            .where(User.id == user.id)
+            .values(last_login_at=datetime.utcnow())
+        )
+        await db.flush()
+
+        logger.info(
+            "User authenticated via fallback",
+            user_id=str(user.id),
+            email=email,
+        )
+
+        return AuthService._build_auth_payload(user)
+
+    @staticmethod
     async def authenticate_user_db(
         db: AsyncSession,
         email: str,
@@ -225,10 +339,21 @@ class AuthService:
                 }
             )
 
-            auth_result = result.scalar()
+            auth_result = AuthService._normalise_auth_result(result.scalar())
 
-            if isinstance(auth_result, str):
-                auth_result = json.loads(auth_result)
+            if AuthService._should_use_fallback(auth_result):
+                logger.warning(
+                    "Falling back to application authentication",
+                    email=email,
+                    ip_address=ip_address
+                )
+                return await AuthService._authenticate_user_application(
+                    db,
+                    email=email,
+                    password=password,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
 
             if not auth_result.get("success"):
                 error_code = auth_result.get("error", "AUTHENTICATION_FAILED")
@@ -266,15 +391,20 @@ class AuthService:
 
             return auth_result
 
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(
                 "Database authentication error",
                 error=str(e),
                 email=email
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Authentication system error"
+            return await AuthService._authenticate_user_application(
+                db,
+                email=email,
+                password=password,
+                ip_address=ip_address,
+                user_agent=user_agent,
             )
 
     @staticmethod

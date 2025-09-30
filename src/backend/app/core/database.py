@@ -3,7 +3,7 @@ import asyncio
 import ssl
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
 
 import structlog
 from sqlalchemy import event
@@ -26,9 +26,61 @@ class Base(DeclarativeBase):
     pass
 
 
+def _normalise_async_database_url(raw_url: str) -> str:
+    """Ensure PostgreSQL URLs use the asyncpg driver and supported parameters."""
+
+    if not raw_url:
+        return raw_url
+
+    url = raw_url
+
+    # Accept the short-hand postgres:// and rewrite it to the SQLAlchemy standard
+    # PostgreSQL scheme so downstream parsing behaves consistently.
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+
+    parsed = urlsplit(url)
+    if not parsed.scheme or not parsed.scheme.startswith("postgresql"):
+        return url
+
+    scheme = parsed.scheme
+    if "+asyncpg" not in scheme:
+        scheme = "postgresql+asyncpg"
+        logger.info(
+            "Normalised PostgreSQL URL for async usage",
+            original_scheme=parsed.scheme,
+            adjusted_scheme=scheme,
+        )
+
+    # asyncpg does not understand the libpq specific sslmode query parameter.  Neon
+    # recommends using `sslmode=require`, so strip it from the URL and rely on the
+    # explicit SSL configuration that is added to the connect args below.
+    query_pairs = parse_qsl(parsed.query, keep_blank_values=True)
+    filtered_pairs = []
+    removed_params = set()
+    for key, value in query_pairs:
+        if key.lower() == "sslmode":
+            removed_params.add(key.lower())
+            continue
+        filtered_pairs.append((key, value))
+
+    if removed_params:
+        logger.info(
+            "Removed unsupported PostgreSQL URL parameters for asyncpg",
+            removed_params=sorted(removed_params),
+        )
+
+    adjusted_query = urlencode(filtered_pairs, doseq=True)
+    adjusted_url = urlunsplit((scheme, parsed.netloc, parsed.path, adjusted_query, parsed.fragment))
+
+    return adjusted_url
+
+
+DATABASE_URL = _normalise_async_database_url(settings.DATABASE_URL)
+
 # Configure TLS when talking to remote hosts such as Neon and provide
 # sensible defaults for other database backends (e.g. SQLite used in tests).
-_db_url = urlparse(settings.DATABASE_URL)
+_db_url = urlparse(DATABASE_URL)
 _is_postgres = _db_url.scheme.startswith("postgres")
 IS_POSTGRES = _is_postgres
 
@@ -76,7 +128,7 @@ else:
     )
 
 # Create async engine with optimized connection pooling when available
-engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(

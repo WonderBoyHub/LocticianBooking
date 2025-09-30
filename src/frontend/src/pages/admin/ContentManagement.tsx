@@ -11,7 +11,8 @@ import {
   CalendarDays,
   UploadCloud,
   Trash2,
-  Play
+  Play,
+  SlidersHorizontal
 } from 'lucide-react';
 
 import { Button } from '../../components/ui/Button';
@@ -21,17 +22,40 @@ import {
   useGetMediaLibraryQuery,
   useUploadMediaAssetMutation,
   useUpdateMediaAssetMutation,
-  useDeleteMediaAssetMutation
+  useDeleteMediaAssetMutation,
+  useGetCmsContentSettingsQuery,
+  useUpdateCmsContentSettingsMutation
 } from '../../store/api';
 import { useAppDispatch } from '../../store/hooks';
 import { addNotification } from '../../store/slices/uiSlice';
-import type { InstagramPost, MediaAssetAdmin } from '../../types';
+import type { CmsContentSettings, InstagramPost, MediaAssetAdmin } from '../../types';
 import { mapInstagramPostDto } from '../../utils/instagram';
 
-const MAX_FEATURED_POSTS = 9;
+const DEFAULT_CONTENT_SETTINGS: CmsContentSettings = {
+  instagramMaxItems: 9,
+  instagramFeaturedOnly: true,
+  instagramAllowVideos: true,
+  instagramAllowCarousels: true,
+  mediaMaxItems: 12,
+  mediaFeaturedOnly: true,
+  mediaIncludeImages: true,
+  mediaIncludeVideos: true
+};
 
 export const ContentManagement: React.FC = () => {
   const dispatch = useAppDispatch();
+  const [settingsForm, setSettingsForm] = React.useState<CmsContentSettings>(
+    DEFAULT_CONTENT_SETTINGS
+  );
+  const {
+    data: settingsData,
+    isLoading: settingsLoading,
+    isFetching: settingsFetching,
+    isError: settingsError,
+    refetch: refetchSettings
+  } = useGetCmsContentSettingsQuery();
+  const [updateCmsSettings, { isLoading: isSavingSettings }] =
+    useUpdateCmsContentSettingsMutation();
   const {
     data,
     isLoading,
@@ -50,6 +74,12 @@ export const ContentManagement: React.FC = () => {
   const [updateMediaAsset, { isLoading: isUpdatingMedia }] = useUpdateMediaAssetMutation();
   const [deleteMediaAsset, { isLoading: isDeletingMedia }] = useDeleteMediaAssetMutation();
   const [activeMediaId, setActiveMediaId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (settingsData) {
+      setSettingsForm(settingsData);
+    }
+  }, [settingsData]);
 
   const posts = React.useMemo<InstagramPost[]>(() => {
     if (!data?.data) {
@@ -75,6 +105,39 @@ export const ContentManagement: React.FC = () => {
     isFeatured: false
   });
 
+  const handleSettingsChange = <K extends keyof CmsContentSettings>(
+    key: K,
+    value: CmsContentSettings[K]
+  ) => {
+    setSettingsForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSettingsSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    try {
+      await updateCmsSettings(settingsForm).unwrap();
+      dispatch(
+        addNotification({
+          type: 'success',
+          message: 'Forsideindstillingerne er opdateret.'
+        })
+      );
+      await Promise.all([refetchSettings(), refetch(), refetchMedia()]);
+    } catch (error) {
+      console.error(error);
+      dispatch(
+        addNotification({
+          type: 'error',
+          message: 'Kunne ikke gemme indstillingerne. Prøv igen.'
+        })
+      );
+    }
+  };
+
   React.useEffect(() => {
     const nextOrders = posts.reduce<Record<string, number>>((acc, post) => {
       acc[post.id] = post.displayOrder ?? 0;
@@ -87,6 +150,7 @@ export const ContentManagement: React.FC = () => {
     () => posts.filter((post) => post.isFeatured).length,
     [posts]
   );
+  const maxFeaturedPosts = settingsForm.instagramMaxItems ?? DEFAULT_CONTENT_SETTINGS.instagramMaxItems;
 
   const handleMediaFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -396,6 +460,195 @@ export const ContentManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-soft border border-brown-100 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+              <SlidersHorizontal className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-serif font-bold text-brand-dark">
+                Forsideindstillinger
+              </h2>
+              <p className="text-sm text-gray-600">
+                Styr hvor mange opslag og galleri-elementer der vises, og hvilke formater der er tilladt.
+              </p>
+            </div>
+          </div>
+
+          {settingsFetching ? (
+            <span className="text-xs uppercase tracking-wide text-brand-primary">Opdaterer…</span>
+          ) : null}
+        </div>
+
+        {settingsError ? (
+          <div className="mt-6 rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
+            Kunne ikke hente de nuværende indstillinger. Prøv at opdatere siden.
+          </div>
+        ) : (
+          <form onSubmit={handleSettingsSubmit} className="mt-6 grid gap-6 md:grid-cols-2">
+            <fieldset className="space-y-4">
+              <legend className="text-sm font-semibold text-brand-dark uppercase tracking-wide">
+                Instagram
+              </legend>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-brand-dark" htmlFor="instagram-limit">
+                  Maksimalt antal opslag på forsiden
+                </label>
+                <input
+                  id="instagram-limit"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={settingsForm.instagramMaxItems}
+                  onChange={(event) =>
+                    handleSettingsChange(
+                      'instagramMaxItems',
+                      Math.max(0, Math.min(50, Number(event.target.value) || 0))
+                    )
+                  }
+                  className="w-full rounded-lg border border-brown-200 px-3 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <p className="text-xs text-gray-500">Dette antal bruges også på forsiden.</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="instagram-featured-only"
+                  type="checkbox"
+                  checked={settingsForm.instagramFeaturedOnly}
+                  onChange={(event) =>
+                    handleSettingsChange('instagramFeaturedOnly', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="instagram-featured-only" className="text-sm text-brand-dark">
+                  Vis kun fremhævede opslag
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="instagram-allow-videos"
+                  type="checkbox"
+                  checked={settingsForm.instagramAllowVideos}
+                  onChange={(event) =>
+                    handleSettingsChange('instagramAllowVideos', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="instagram-allow-videos" className="text-sm text-brand-dark">
+                  Tillad videoer
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="instagram-allow-carousels"
+                  type="checkbox"
+                  checked={settingsForm.instagramAllowCarousels}
+                  onChange={(event) =>
+                    handleSettingsChange('instagramAllowCarousels', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="instagram-allow-carousels" className="text-sm text-brand-dark">
+                  Tillad karusseller
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-4">
+              <legend className="text-sm font-semibold text-brand-dark uppercase tracking-wide">
+                Galleri
+              </legend>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-brand-dark" htmlFor="media-limit">
+                  Maksimalt antal mediefiler på forsiden
+                </label>
+                <input
+                  id="media-limit"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={settingsForm.mediaMaxItems}
+                  onChange={(event) =>
+                    handleSettingsChange(
+                      'mediaMaxItems',
+                      Math.max(0, Math.min(50, Number(event.target.value) || 0))
+                    )
+                  }
+                  className="w-full rounded-lg border border-brown-200 px-3 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="media-featured-only"
+                  type="checkbox"
+                  checked={settingsForm.mediaFeaturedOnly}
+                  onChange={(event) =>
+                    handleSettingsChange('mediaFeaturedOnly', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="media-featured-only" className="text-sm text-brand-dark">
+                  Vis kun fremhævede mediefiler
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="media-include-images"
+                  type="checkbox"
+                  checked={settingsForm.mediaIncludeImages}
+                  onChange={(event) =>
+                    handleSettingsChange('mediaIncludeImages', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="media-include-images" className="text-sm text-brand-dark">
+                  Inkluder billeder
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="media-include-videos"
+                  type="checkbox"
+                  checked={settingsForm.mediaIncludeVideos}
+                  onChange={(event) =>
+                    handleSettingsChange('mediaIncludeVideos', event.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-brown-200 text-brand-primary focus:ring-brand-primary"
+                  disabled={settingsLoading || isSavingSettings}
+                />
+                <label htmlFor="media-include-videos" className="text-sm text-brand-dark">
+                  Inkluder videoer
+                </label>
+              </div>
+            </fieldset>
+
+            <div className="md:col-span-2 flex items-center justify-end gap-3">
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isSavingSettings}
+                disabled={settingsLoading}
+              >
+                Gem indstillinger
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+      <div className="bg-white rounded-2xl shadow-soft border border-brown-100 p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
@@ -406,19 +659,19 @@ export const ContentManagement: React.FC = () => {
                 Instagram indhold på forsiden
               </h1>
               <p className="text-sm text-gray-600">
-                Vælg hvilke opslag der vises under overskriften på forsiden. Fremhæv op til {MAX_FEATURED_POSTS} opslag for den bedste præsentation.
+                Vælg hvilke opslag der vises under overskriften på forsiden. Fremhæv op til {maxFeaturedPosts} opslag for den bedste præsentation.
               </p>
             </div>
           </div>
 
           <div className="text-sm text-right text-gray-600">
             <p>
-              Fremhævede opslag: <span className="font-semibold text-brand-dark">{featuredCount}</span> / {MAX_FEATURED_POSTS}
+              Fremhævede opslag: <span className="font-semibold text-brand-dark">{featuredCount}</span> / {maxFeaturedPosts}
             </p>
-            {featuredCount > MAX_FEATURED_POSTS && (
+            {featuredCount > maxFeaturedPosts && (
               <p className="mt-1 inline-flex items-center gap-1 text-red-600">
                 <AlertTriangle className="h-4 w-4" />
-                Visningen viser kun de første {MAX_FEATURED_POSTS} opslag efter sortering.
+                Visningen viser kun de første {maxFeaturedPosts} opslag efter sortering.
               </p>
             )}
           </div>

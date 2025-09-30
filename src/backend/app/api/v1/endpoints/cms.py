@@ -14,6 +14,13 @@ from app.models.cms import CMSPage
 from app.models.enums import PageType
 from app.models.user import User
 from app.schemas.cms import (
+    CMSContentOverview,
+    CMSContentOverviewPublic,
+    CMSContentOverviewPublicResponse,
+    CMSContentOverviewResponse,
+    CMSContentSettings,
+    CMSContentSettingsResponse,
+    CMSContentSettingsUpdate,
     CMSPageCreate,
     CMSPageDetail,
     CMSPageList,
@@ -21,6 +28,9 @@ from app.schemas.cms import (
     CMSPageSummary,
     CMSPageUpdate,
 )
+from app.schemas.instagram import InstagramPostAdmin, InstagramPostPublic
+from app.schemas.media import MediaFileAdmin, MediaFilePublic
+from app.services.cms_service import cms_service
 
 logger = structlog.get_logger(__name__)
 
@@ -212,3 +222,73 @@ async def delete_page(
     await db.commit()
 
     return None
+
+
+@router.get("/content/settings", response_model=CMSContentSettingsResponse)
+async def get_content_settings(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_admin),
+) -> CMSContentSettingsResponse:
+    """Return CMS content settings for administrators."""
+
+    settings_dict = await cms_service.get_content_settings(db)
+    payload = CMSContentSettings.model_validate(settings_dict)
+    return CMSContentSettingsResponse(data=payload)
+
+
+@router.put("/content/settings", response_model=CMSContentSettingsResponse)
+async def update_content_settings(
+    payload: CMSContentSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_admin),
+) -> CMSContentSettingsResponse:
+    """Update CMS content settings."""
+
+    updates = payload.model_dump(exclude_unset=True)
+    settings_dict = await cms_service.update_content_settings(db, updates)
+    return CMSContentSettingsResponse(
+        data=CMSContentSettings.model_validate(settings_dict)
+    )
+
+
+@router.get("/content/overview", response_model=CMSContentOverviewResponse)
+async def get_content_overview(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_admin),
+) -> CMSContentOverviewResponse:
+    """Return a preview of homepage content for administrators."""
+
+    overview = await cms_service.get_content_overview(db, for_admin=True)
+    overview_payload = CMSContentOverview(
+        settings=CMSContentSettings.model_validate(overview["settings"]),
+        instagram=[
+            InstagramPostAdmin.model_validate(post, from_attributes=True)
+            for post in overview["instagram"]
+        ],
+        media=[
+            MediaFileAdmin.model_validate(item, from_attributes=True)
+            for item in overview["media"]
+        ],
+    )
+    return CMSContentOverviewResponse(data=overview_payload)
+
+
+@router.get("/content/homepage", response_model=CMSContentOverviewPublicResponse)
+async def get_public_content(
+    db: AsyncSession = Depends(get_db),
+) -> CMSContentOverviewPublicResponse:
+    """Return homepage content respecting configured settings."""
+
+    overview = await cms_service.get_content_overview(db, for_admin=False)
+    overview_payload = CMSContentOverviewPublic(
+        settings=CMSContentSettings.model_validate(overview["settings"]),
+        instagram=[
+            InstagramPostPublic.model_validate(post, from_attributes=True)
+            for post in overview["instagram"]
+        ],
+        media=[
+            MediaFilePublic.model_validate(item, from_attributes=True)
+            for item in overview["media"]
+        ],
+    )
+    return CMSContentOverviewPublicResponse(data=overview_payload)

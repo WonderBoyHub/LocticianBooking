@@ -8,7 +8,7 @@ from app.models.availability import AvailabilityPattern, AvailabilityOverride
 from app.models.calendar_event import CalendarEvent
 from app.models.audit import AuditLog
 from app.models.email_template import EmailTemplate, EmailQueue
-from app.models.cms import CMSPage
+from app.models.cms import CMSContentSettings, CMSPage
 from app.models.media import MediaFile
 from app.models.instagram import InstagramPost
 
@@ -30,6 +30,7 @@ __all__ = [
     "EmailTemplate",
     "EmailQueue",
     "CMSPage",
+    "CMSContentSettings",
     "MediaFile",
     "InstagramPost",
 ]

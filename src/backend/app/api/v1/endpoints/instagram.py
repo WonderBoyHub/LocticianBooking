@@ -1,6 +1,8 @@
 """API endpoints for Instagram content management."""
 from typing import List
 
+from typing import List, Optional
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -15,6 +17,7 @@ from app.schemas.instagram import (
     InstagramPostPublic,
     InstagramPostUpdate,
 )
+from app.services.cms_service import cms_service
 
 logger = structlog.get_logger(__name__)
 
@@ -23,19 +26,33 @@ router = APIRouter()
 
 @router.get("/posts", response_model=List[InstagramPostPublic])
 async def list_featured_instagram_posts(
-    limit: int = Query(9, ge=1, le=24, description="Maximum number of posts to return"),
+    limit: Optional[int] = Query(
+        None, ge=1, le=24, description="Maximum number of posts to return"
+    ),
+    include_videos: Optional[bool] = Query(
+        None, description="Override whether video posts are returned"
+    ),
+    include_carousels: Optional[bool] = Query(
+        None, description="Override whether carousel posts are returned"
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> List[InstagramPostPublic]:
     """Return featured Instagram posts ordered for the homepage feed."""
     try:
-        query = (
-            select(InstagramPost)
-            .where(InstagramPost.is_featured.is_(True))
-            .order_by(InstagramPost.display_order.asc(), InstagramPost.posted_at.desc())
-            .limit(limit)
+        settings = await cms_service.get_content_settings(db)
+        effective_settings = dict(settings)
+
+        if include_videos is not None:
+            effective_settings["instagram_allow_videos"] = include_videos
+        if include_carousels is not None:
+            effective_settings["instagram_allow_carousels"] = include_carousels
+
+        posts = await cms_service.fetch_instagram_posts(
+            db,
+            effective_settings,
+            for_admin=False,
+            limit_override=limit,
         )
-        result = await db.execute(query)
-        posts = result.scalars().all()
 
         return [
             InstagramPostPublic.model_validate(post, from_attributes=True)

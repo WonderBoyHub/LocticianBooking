@@ -2,10 +2,10 @@
 CMS page model.
 """
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, IS_POSTGRES
@@ -91,3 +91,20 @@ class CMSPage(Base, BaseModel):
 
     def __repr__(self) -> str:
         return f"<CMSPage(id={self.id}, title={self.title}, type={self.page_type})>"
+
+
+_SettingsJSONType = JSONB if IS_POSTGRES else JSON
+
+
+class CMSContentSettings(Base, BaseModel):
+    """Persisted configuration for CMS controlled content blocks."""
+
+    __tablename__ = "cms_content_settings"
+
+    key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    value: Mapped[Dict[str, Any]] = mapped_column(
+        _SettingsJSONType, nullable=False, default=dict
+    )
+
+    def __repr__(self) -> str:
+        return f"<CMSContentSettings(key={self.key})>"
