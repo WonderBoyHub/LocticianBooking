@@ -3,7 +3,7 @@ Mollie Payment Integration with subscription management, webhooks, and billing.
 Complete implementation with proper Mollie API integration.
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import List, Optional, Dict, Any
 from uuid import UUID
@@ -64,7 +64,7 @@ router = APIRouter()
 
 
 # Payment Intent Endpoints
-@router.post("/payments/create-intent", response_model=PaymentIntent, status_code=status.HTTP_201_CREATED)
+@router.post("/create-intent", response_model=PaymentIntent, status_code=status.HTTP_201_CREATED)
 async def create_payment_intent(
     payment_data: PaymentIntentCreate,
     current_user: User = Depends(get_current_user),
@@ -107,7 +107,15 @@ async def create_payment_intent(
                 )
 
         # Create URLs
-        base_url = settings.BACKEND_CORS_ORIGINS[0] if settings.BACKEND_CORS_ORIGINS else "http://localhost:8000"
+        origins = settings.cors_origins_list
+        if origins:
+            base_url = origins[0]
+        elif settings.FRONTEND_URL:
+            base_url = settings.FRONTEND_URL
+        else:
+            base_url = "http://localhost:8000"
+
+        base_url = base_url.rstrip("/")
         webhook_url = f"{base_url}/api/v1/payments/webhook"
         redirect_url = f"{base_url}/payment/success"
 
@@ -173,7 +181,7 @@ async def create_payment_intent(
             payment_type=payment_data.payment_type,
             checkout_url=mollie_service.get_checkout_url(mollie_payment),
             mollie_payment_id=payment_intent_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
     except MollieAPIError as e:
@@ -192,7 +200,7 @@ async def create_payment_intent(
         )
 
 
-@router.get("/payments/{payment_id}", response_model=Dict[str, Any])
+@router.get("/{payment_id}", response_model=Dict[str, Any])
 async def get_payment_status(
     payment_id: str,
     current_user: User = Depends(get_current_user),
@@ -298,7 +306,7 @@ async def create_mollie_customer(
             email=current_user.email,
             metadata={
                 "user_id": str(current_user.id),
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -491,7 +499,7 @@ async def create_subscription(
         amount = plan.price_monthly if subscription_data.billing_period == BillingPeriod.MONTHLY else plan.price_yearly
         interval = "1 month" if subscription_data.billing_period == BillingPeriod.MONTHLY else "1 year"
 
-        starts_at = datetime.utcnow()
+        starts_at = datetime.now(timezone.utc)
         if subscription_data.billing_period == BillingPeriod.MONTHLY:
             ends_at = starts_at + timedelta(days=30)
         else:
@@ -584,7 +592,7 @@ async def create_subscription(
             mollie_subscription_id=mollie_subscription.id,
             mollie_customer_id=mollie_customer_id,
             metadata=subscription_data.metadata,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
     except MollieAPIError as e:
@@ -754,7 +762,7 @@ async def cancel_subscription(
             current_period_end=subscription.current_period_end,
             mollie_subscription_id=subscription.mollie_subscription_id,
             mollie_customer_id=subscription.mollie_customer_id,
-            canceled_at=datetime.utcnow(),
+            canceled_at=datetime.now(timezone.utc),
             cancellation_reason="User requested cancellation",
             created_at=subscription.created_at
         )
@@ -1114,7 +1122,7 @@ async def health_check():
             "mollie_connected": True,
             "organization": org.get("name", "Unknown"),
             "test_mode": mollie_service.test_mode,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error("Health check failed", error=str(e))
@@ -1124,6 +1132,6 @@ async def health_check():
                 "status": "unhealthy",
                 "mollie_connected": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
