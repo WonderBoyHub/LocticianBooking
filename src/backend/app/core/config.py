@@ -84,6 +84,8 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Loctician Booking"
     SMTP_STARTTLS: bool = True
     SMTP_SSL: bool = False
+    BREVO_API_KEY: Optional[str] = None
+    BREVO_API_BASE_URL: str = "https://api.brevo.com/v3"
 
     # File Upload
     MAX_FILE_SIZE_MB: int = 10

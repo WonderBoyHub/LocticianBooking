@@ -3,7 +3,6 @@ Comprehensive email service for the Loctician Booking System.
 Handles email templating, sending, queuing, and automation workflows.
 """
 import asyncio
-import smtplib
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -11,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiosmtplib
 import structlog
-from jinja2 import BaseLoader, Environment, Template
+from jinja2 import BaseLoader, Environment
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -22,6 +21,13 @@ from app.models.booking import Booking
 from app.models.email_template import EmailQueue, EmailTemplate
 from app.models.enums import BookingStatus, EmailStatus, TemplateType
 from app.models.user import User
+
+try:
+    import sib_api_v3_sdk
+    from sib_api_v3_sdk.rest import ApiException as BrevoApiException
+except Exception:  # pragma: no cover - optional dependency
+    sib_api_v3_sdk = None
+    BrevoApiException = Exception
 
 logger = structlog.get_logger(__name__)
 
@@ -111,6 +117,91 @@ class EmailSender:
         self.from_name = settings.SMTP_FROM_NAME
         self.smtp_starttls = getattr(settings, "SMTP_STARTTLS", True)
         self.smtp_ssl = getattr(settings, "SMTP_SSL", False)
+        self.brevo_api_key = getattr(settings, "BREVO_API_KEY", None)
+        self.brevo_api_base_url = getattr(
+            settings, "BREVO_API_BASE_URL", "https://api.brevo.com/v3"
+        )
+        self._brevo_api_client = None
+        self._brevo_transactional_api = None
+
+    def _get_brevo_client(self):
+        """Initialise (or return cached) Brevo transactional email client."""
+        if not self.brevo_api_key or sib_api_v3_sdk is None:
+            return None
+
+        if self._brevo_transactional_api is None:
+            configuration = sib_api_v3_sdk.Configuration()
+            configuration.api_key["api-key"] = self.brevo_api_key
+            if self.brevo_api_base_url:
+                configuration.host = self.brevo_api_base_url
+
+            self._brevo_api_client = sib_api_v3_sdk.ApiClient(configuration)
+            self._brevo_transactional_api = sib_api_v3_sdk.TransactionalEmailsApi(
+                self._brevo_api_client
+            )
+
+        return self._brevo_transactional_api
+
+    async def _send_via_brevo(
+        self,
+        to_email: str,
+        to_name: str,
+        subject: str,
+        html_content: Optional[str],
+        text_content: Optional[str],
+        from_email: Optional[str],
+        from_name: Optional[str],
+    ) -> Tuple[bool, Optional[str]]:
+        """Send email using Brevo Transactional Emails API."""
+
+        api_instance = self._get_brevo_client()
+        if api_instance is None:
+            logger.error("Brevo SDK not available or API key missing")
+            return False, "Brevo configuration not set"
+
+        sender_email = from_email or self.from_email
+        sender_name = from_name or self.from_name
+
+        if not sender_email:
+            logger.error("Brevo sender email missing")
+            return False, "Sender email not configured"
+
+        def _send_email_via_brevo():
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                sender={"name": sender_name, "email": sender_email},
+                to=[{"email": to_email, "name": to_name}],
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content,
+            )
+            return api_instance.send_transac_email(send_smtp_email)
+
+        try:
+            await asyncio.to_thread(_send_email_via_brevo)
+            logger.info(
+                "Email sent successfully via Brevo",
+                to_email=to_email,
+                subject=subject,
+            )
+            return True, None
+        except BrevoApiException as exc:  # pragma: no cover - network dependent
+            error_msg = getattr(exc, "body", str(exc))
+            logger.error(
+                "Brevo API error",
+                to_email=to_email,
+                subject=subject,
+                error=error_msg,
+            )
+            return False, error_msg
+        except Exception as exc:  # pragma: no cover - safety net
+            error_msg = str(exc)
+            logger.error(
+                "Unexpected Brevo error",
+                to_email=to_email,
+                subject=subject,
+                error=error_msg,
+            )
+            return False, error_msg
 
     async def send_email(
         self,
@@ -137,12 +228,23 @@ class EmailSender:
         Returns:
             Tuple of (success, error_message)
         """
+        if not html_content and not text_content:
+            return False, "No email content provided"
+
+        if self.brevo_api_key:
+            return await self._send_via_brevo(
+                to_email,
+                to_name,
+                subject,
+                html_content,
+                text_content,
+                from_email,
+                from_name,
+            )
+
         if not self.smtp_host or not self.smtp_user or not self.smtp_password:
             logger.error("SMTP configuration missing")
             return False, "SMTP configuration not set"
-
-        if not html_content and not text_content:
-            return False, "No email content provided"
 
         try:
             # Create message
