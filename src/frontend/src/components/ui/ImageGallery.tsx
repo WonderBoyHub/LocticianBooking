@@ -258,7 +258,7 @@ const Lightbox: React.FC<LightboxProps> = ({
         >
           <motion.img
             key={currentIndex}
-            src={currentImage.src}
+            src={currentImage.src || 'https://picsum.photos/800/600'}
             alt={currentImage.alt}
             className="max-w-full max-h-full object-contain cursor-move"
             style={{
@@ -386,7 +386,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         {images.map((image, index) => (
           <div key={image.id} className={imageContainerClassName}>
             <img
-              src={image.thumbnail || image.src}
+              src={image.thumbnail || image.src || 'https://picsum.photos/400/400'}
               alt={image.alt}
               className="w-full h-full object-cover transition-transform group-hover:scale-110"
               onClick={() => handleImageClick(image, index)}

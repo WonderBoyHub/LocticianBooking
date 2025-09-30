@@ -42,19 +42,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
     >
       {/* Service Image */}
       <div className="relative h-48 bg-gradient-to-br from-brand-accent to-brand-secondary overflow-hidden">
-        {service.images && service.images.length > 0 ? (
-          <img
-            src={service.images[0]}
-            alt={service.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-16 h-16 bg-brand-primary/20 rounded-full flex items-center justify-center">
-              <span className="text-2xl text-brand-primary">✨</span>
-            </div>
-          </div>
-        )}
+        <img
+          src={service.images && service.images.length > 0 ? service.images[0] : 'https://picsum.photos/400/300'}
+          alt={service.name}
+          className="w-full h-full object-cover"
+        />
 
         {/* Price Badge */}
         <div className="absolute top-3 right-3">

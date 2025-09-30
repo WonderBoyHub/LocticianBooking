@@ -93,21 +93,22 @@ export const ServiceDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Service images */}
-                {service.images && service.images.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-brand-dark mb-4">Gallery</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {service.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`${serviceName} ${index + 1}`}
-                          className="w-full h-48 object-cover rounded-lg"
-                        />
-                      ))}
-                    </div>
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-brand-dark mb-4">Gallery</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {(service.images && service.images.length > 0
+                      ? service.images
+                      : ['https://picsum.photos/400/300?random=1', 'https://picsum.photos/400/300?random=2', 'https://picsum.photos/400/300?random=3']
+                    ).map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`${serviceName} ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Requirements */}
                 {service.requirements && service.requirements.length > 0 && (

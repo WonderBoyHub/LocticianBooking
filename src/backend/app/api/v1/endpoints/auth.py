@@ -151,25 +151,32 @@ async def register(
         )
 
         # Queue verification email
+        import json
+
+        welcome_variables_dict = {
+            "verification_token": verification_token,
+            "user_name": registration_data.first_name
+        }
+
         result = await db.execute(
-            """
+            text("""
             INSERT INTO email_queue (
                 template_id, to_email, to_name, from_email, from_name,
-                subject, template_variables, user_id
+                subject, template_variables, user_id, status, scheduled_at, created_at
             )
             SELECT
                 et.id, :email, :name, 'noreply@loctician.dk', 'Loctician',
                 'Welcome - Please Verify Your Email',
-                :variables::jsonb, :user_id
+                cast(:variables as jsonb), :user_id, 'queued'::emailstatus, NOW(), NOW()
             FROM email_templates et
-            WHERE et.template_type::text = 'welcome' AND et.is_active = TRUE
+            WHERE et.template_type = 'WELCOME'::templatetype AND et.is_active = TRUE
             LIMIT 1
-            """,
+            """),
             {
                 "email": registration_data.email,
                 "name": f"{registration_data.first_name} {registration_data.last_name}",
-                "variables": f'{{"verification_token": "{verification_token}", "user_name": "{registration_data.first_name}"}}',
-                "user_id": user_id
+                "variables": json.dumps(welcome_variables_dict),
+                "user_id": str(user_id)
             }
         )
 
@@ -344,18 +351,21 @@ async def request_password_reset(
             user_first_name = user.first_name or user.email.split('@')[0]
 
             import json
-            variables_json = json.dumps({"reset_token": reset_token, "user_name": user_first_name})
+            from sqlalchemy import cast, type_coerce
+            from sqlalchemy.dialects.postgresql import JSONB
+
+            variables_dict = {"reset_token": reset_token, "user_name": user_first_name}
 
             result = await db.execute(
                 text("""
                 INSERT INTO email_queue (
                     template_id, to_email, to_name, from_email, from_name,
-                    subject, template_variables, user_id
+                    subject, template_variables, user_id, status, scheduled_at, created_at
                 )
                 SELECT
                     et.id, :email, :name, 'noreply@loctician.dk', 'Loctician',
                     'Password Reset Request',
-                    :variables::jsonb, :user_id
+                    cast(:variables as jsonb), :user_id, 'queued'::emailstatus, NOW(), NOW()
                 FROM email_templates et
                 WHERE et.template_type = 'PASSWORD_RESET'::templatetype AND et.is_active = TRUE
                 LIMIT 1
@@ -363,7 +373,7 @@ async def request_password_reset(
                 {
                     "email": user.email,
                     "name": user_full_name,
-                    "variables": variables_json,
+                    "variables": json.dumps(variables_dict),
                     "user_id": str(user.id)
                 }
             )

@@ -300,7 +300,7 @@ export const ContentManagement: React.FC = () => {
                 className="relative block aspect-square overflow-hidden"
               >
                 <img
-                  src={post.thumbnailUrl ?? post.mediaUrl}
+                  src={post.thumbnailUrl ?? post.mediaUrl ?? 'https://picsum.photos/600/600'}
                   alt={post.caption ? post.caption.slice(0, 100) : 'Instagram opslag'}
                   className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                   loading="lazy"
@@ -564,7 +564,7 @@ export const ContentManagement: React.FC = () => {
                       </div>
                     ) : (
                       <img
-                        src={media.url}
+                        src={media.url || 'https://picsum.photos/600/400'}
                         alt={media.altText ?? media.originalFilename}
                         className="w-full h-56 object-cover"
                         loading="lazy"

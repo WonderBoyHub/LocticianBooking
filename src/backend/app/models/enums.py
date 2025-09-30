@@ -65,15 +65,15 @@ class PageType(str, enum.Enum):
 
 
 class TemplateType(str, enum.Enum):
-    """Email template type enumeration."""
+    """Email template type enumeration - matches Neon DB templatetype enum."""
 
-    BOOKING_CONFIRMATION = "booking_confirmation"
-    REMINDER = "reminder"
-    CANCELLATION = "cancellation"
-    WELCOME = "welcome"
-    PASSWORD_RESET = "password_reset"
-    MARKETING = "marketing"
-    INVOICE = "invoice"
+    BOOKING_CONFIRMATION = "BOOKING_CONFIRMATION"
+    REMINDER = "REMINDER"
+    CANCELLATION = "CANCELLATION"
+    WELCOME = "WELCOME"
+    PASSWORD_RESET = "PASSWORD_RESET"
+    MARKETING = "MARKETING"
+    INVOICE = "INVOICE"
 
 
 class EmailStatus(str, enum.Enum):

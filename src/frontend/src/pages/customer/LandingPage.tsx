@@ -212,7 +212,7 @@ export const LandingPage: React.FC = () => {
                         className="group relative block aspect-square overflow-hidden rounded-md shadow-sm"
                       >
                         <img
-                          src={post.thumbnailUrl ?? post.mediaUrl}
+                          src={post.thumbnailUrl ?? post.mediaUrl ?? 'https://picsum.photos/400/400'}
                           alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
@@ -389,12 +389,12 @@ export const LandingPage: React.FC = () => {
             >
               <div className="grid grid-cols-2 gap-4">
                 <img
-                  src="/images/gallery-1.jpg"
+                  src="https://picsum.photos/400/500?random=1"
                   alt="Loc styling proces"
                   className="rounded-xl shadow-soft"
                 />
                 <img
-                  src="/images/gallery-2.jpg"
+                  src="https://picsum.photos/400/500?random=2"
                   alt="Færdig loc styling"
                   className="rounded-xl shadow-soft mt-8"
                 />
@@ -495,7 +495,7 @@ export const LandingPage: React.FC = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <img
-                    src={post.thumbnailUrl ?? post.mediaUrl}
+                    src={post.thumbnailUrl ?? post.mediaUrl ?? 'https://picsum.photos/600/600'}
                     alt={post.caption ? post.caption.slice(0, 80) : 'Instagram opslag'}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
@@ -581,7 +581,7 @@ export const LandingPage: React.FC = () => {
                     />
                   ) : (
                     <img
-                      src={item.url}
+                      src={item.url || 'https://picsum.photos/600/400'}
                       alt={item.altText ?? item.originalFilename}
                       className="w-full h-72 object-cover"
                       loading="lazy"

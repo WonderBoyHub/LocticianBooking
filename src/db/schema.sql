@@ -464,21 +464,21 @@ CREATE TABLE instagram_posts (
 -- EMAIL SYSTEM
 -- =====================================================
 
--- Email templates
-CREATE TYPE template_type AS ENUM (
-    'booking_confirmation',
-    'reminder',
-    'cancellation',
-    'welcome',
-    'password_reset',
-    'marketing',
-    'invoice'
+-- Email templates (UPPERCASE to match Neon DB)
+CREATE TYPE templatetype AS ENUM (
+    'BOOKING_CONFIRMATION',
+    'REMINDER',
+    'CANCELLATION',
+    'WELCOME',
+    'PASSWORD_RESET',
+    'MARKETING',
+    'INVOICE'
 );
 
 CREATE TABLE email_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
-    template_type template_type NOT NULL,
+    template_type templatetype NOT NULL,
     subject VARCHAR(200) NOT NULL,
     html_content TEXT NOT NULL,
     text_content TEXT,

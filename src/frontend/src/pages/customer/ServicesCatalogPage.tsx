@@ -184,7 +184,7 @@ const MediaSpotlight: React.FC<{ media: MediaAsset[] }> = ({ media }) => {
               />
             ) : (
               <img
-                src={item.url}
+                src={item.url || 'https://picsum.photos/600/400'}
                 alt={item.altText ?? item.originalFilename}
                 className="w-full h-64 object-cover"
                 loading="lazy"
