@@ -1,8 +1,10 @@
+'use client'
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from './Button';
 
-const IS_DEVELOPMENT = import.meta.env.DEV;
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 interface Props {
   children: ReactNode;

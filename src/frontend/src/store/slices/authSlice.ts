@@ -11,7 +11,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('jli_token'),
+  token: typeof window !== 'undefined' ? localStorage.getItem('jli_token') : null,
   isAuthenticated: false,
   isLoading: true,
   error: null,
@@ -31,7 +31,9 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
-      localStorage.setItem('jli_token', action.payload.token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jli_token', action.payload.token);
+      }
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.user = null;
@@ -39,7 +41,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = action.payload;
-      localStorage.removeItem('jli_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('jli_token');
+      }
     },
     logout: (state) => {
       state.user = null;
@@ -47,7 +51,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
-      localStorage.removeItem('jli_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('jli_token');
+      }
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {

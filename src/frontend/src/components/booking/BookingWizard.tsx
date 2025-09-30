@@ -155,7 +155,7 @@ export const BookingWizard: React.FC = () => {
         </Card>
 
         {/* Debug info (development only) */}
-        {import.meta.env.DEV && (
+        {process.env.NODE_ENV === 'development' && (
           <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs text-gray-600">
             <details>
               <summary className="cursor-pointer font-medium">Debug Info</summary>

@@ -38,8 +38,8 @@ const CalendarDate: React.FC<CalendarDateProps> = ({
 }) => {
   return (
     <motion.button
-      whilehover={!isDisabled ? { scale: 1.05 } : undefined}
-      whiletap={!isDisabled ? { scale: 0.95 } : undefined}
+      whileHover={!isDisabled ? { scale: 1.05 } : undefined}
+      whileTap={!isDisabled ? { scale: 0.95 } : undefined}
       className={clsx(
         'w-12 h-12 rounded-lg text-sm font-medium transition-all duration-200 relative',
         isSelected && 'bg-brand-primary text-white shadow-md',
@@ -69,8 +69,8 @@ interface TimeSlotProps {
 const TimeSlot: React.FC<TimeSlotProps> = ({ time, isSelected, isDisabled, onClick }) => {
   return (
     <motion.button
-      whilehover={!isDisabled ? { scale: 1.02 } : undefined}
-      whiletap={!isDisabled ? { scale: 0.98 } : undefined}
+      whileHover={!isDisabled ? { scale: 1.02 } : undefined}
+      whileTap={!isDisabled ? { scale: 0.98 } : undefined}
       className={clsx(
         'px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border',
         isSelected && 'bg-brand-primary text-white border-brand-primary shadow-md',
@@ -108,7 +108,7 @@ export const DateTimeSelection: React.FC = () => {
     isLoading: slotsLoading,
     error: slotsError
   } = useGetAvailableSlotsQuery(
-    selectedService
+    selectedService && selectedService.locticianId
       ? {
           locticianId: selectedService.locticianId,
           serviceId: selectedService.id,
@@ -116,7 +116,7 @@ export const DateTimeSelection: React.FC = () => {
           endDate: format(weekEnd, 'yyyy-MM-dd'),
         }
       : { locticianId: '', serviceId: '', startDate: '', endDate: '' },
-    { skip: !selectedService }
+    { skip: !selectedService || !selectedService.locticianId }
   );
 
   const availableSlots = slotsResponse?.data || [];

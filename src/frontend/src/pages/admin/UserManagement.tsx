@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Routes, Route, Link, useNavigate, useSearchParams } from 'react-router-dom';

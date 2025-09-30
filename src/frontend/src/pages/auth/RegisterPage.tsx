@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

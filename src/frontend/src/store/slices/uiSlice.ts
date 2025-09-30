@@ -40,9 +40,15 @@ interface UiState {
 }
 
 const initialState: UiState = {
-  theme: (localStorage.getItem('jli_theme') as 'light' | 'dark' | 'system') || 'system',
-  language: (localStorage.getItem('jli_language') as 'da' | 'en') || 'da',
-  sidebarCollapsed: localStorage.getItem('jli_sidebar_collapsed') === 'true',
+  theme: typeof window !== 'undefined'
+    ? (localStorage.getItem('jli_theme') as 'light' | 'dark' | 'system') || 'system'
+    : 'system',
+  language: typeof window !== 'undefined'
+    ? (localStorage.getItem('jli_language') as 'da' | 'en') || 'da'
+    : 'da',
+  sidebarCollapsed: typeof window !== 'undefined'
+    ? localStorage.getItem('jli_sidebar_collapsed') === 'true'
+    : false,
   notifications: [],
   modals: [],
   loading: {
@@ -51,8 +57,8 @@ const initialState: UiState = {
   },
   breadcrumbs: [],
   pageTitle: 'JLI Loctician',
-  isMobile: window.innerWidth < 768,
-  isOnline: navigator.onLine,
+  isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+  isOnline: typeof window !== 'undefined' ? navigator.onLine : true,
 };
 
 const uiSlice = createSlice({
@@ -61,19 +67,27 @@ const uiSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
       state.theme = action.payload;
-      localStorage.setItem('jli_theme', action.payload);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jli_theme', action.payload);
+      }
     },
     setLanguage: (state, action: PayloadAction<'da' | 'en'>) => {
       state.language = action.payload;
-      localStorage.setItem('jli_language', action.payload);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jli_language', action.payload);
+      }
     },
     toggleSidebar: (state) => {
       state.sidebarCollapsed = !state.sidebarCollapsed;
-      localStorage.setItem('jli_sidebar_collapsed', state.sidebarCollapsed.toString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jli_sidebar_collapsed', state.sidebarCollapsed.toString());
+      }
     },
     setSidebarCollapsed: (state, action: PayloadAction<boolean>) => {
       state.sidebarCollapsed = action.payload;
-      localStorage.setItem('jli_sidebar_collapsed', action.payload.toString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jli_sidebar_collapsed', action.payload.toString());
+      }
     },
     addNotification: (state, action: PayloadAction<Omit<Notification, 'id'>>) => {
       const notification: Notification = {
@@ -126,7 +140,9 @@ const uiSlice = createSlice({
     },
     setPageTitle: (state, action: PayloadAction<string>) => {
       state.pageTitle = action.payload;
-      document.title = `${action.payload} - JLI Loctician`;
+      if (typeof window !== 'undefined') {
+        document.title = `${action.payload} - JLI Loctician`;
+      }
     },
     setIsMobile: (state, action: PayloadAction<boolean>) => {
       state.isMobile = action.payload;

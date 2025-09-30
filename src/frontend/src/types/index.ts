@@ -186,6 +186,7 @@ export interface RegisterApiResponse {
   email: string;
   message: string;
   email_verification_required: boolean;
+}
 
 // Instagram content types
 export interface InstagramPostDto {

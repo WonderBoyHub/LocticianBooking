@@ -24,7 +24,7 @@ import type {
 } from '../types';
 
 // Define the API base URL
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 const placeholderImage = 'https://picsum.photos/800/600?random=1';
 

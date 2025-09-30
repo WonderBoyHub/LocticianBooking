@@ -16,7 +16,7 @@ class SocketService {
   private reconnectInterval = 5000;
 
   connect(token?: string) {
-    const url = import.meta.env.VITE_WS_URL || 'http://localhost:8000';
+    const url = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000';
 
     this.socket = io(url, {
       auth: {

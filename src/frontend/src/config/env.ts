@@ -65,48 +65,48 @@ const parseArray = (value: string | undefined, defaultValue: string[]): string[]
 // Application configuration
 export const config: AppConfig = {
   api: {
-    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-    wsUrl: import.meta.env.VITE_WS_URL || 'http://localhost:8000',
-    timeout: parseNumber(import.meta.env.VITE_API_TIMEOUT, 10000),
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+    wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000',
+    timeout: parseNumber(process.env.NEXT_PUBLIC_API_TIMEOUT, 10000),
   },
   app: {
-    name: import.meta.env.VITE_APP_NAME || 'JLI Loctician',
-    version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-    environment: (import.meta.env.VITE_APP_ENVIRONMENT as AppConfig['app']['environment']) || 'development',
+    name: process.env.NEXT_PUBLIC_APP_NAME || 'JLI Loctician',
+    version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+    environment: (process.env.NEXT_PUBLIC_APP_ENVIRONMENT as AppConfig['app']['environment']) || 'development',
   },
   features: {
-    analytics: parseBoolean(import.meta.env.VITE_ENABLE_ANALYTICS, false),
-    notifications: parseBoolean(import.meta.env.VITE_ENABLE_NOTIFICATIONS, true),
-    realTime: parseBoolean(import.meta.env.VITE_ENABLE_REAL_TIME, true),
-    offlineMode: parseBoolean(import.meta.env.VITE_ENABLE_OFFLINE_MODE, false),
-    serviceWorker: parseBoolean(import.meta.env.VITE_ENABLE_SERVICE_WORKER, false),
+    analytics: parseBoolean(process.env.NEXT_PUBLIC_ENABLE_ANALYTICS, false),
+    notifications: parseBoolean(process.env.NEXT_PUBLIC_ENABLE_NOTIFICATIONS, true),
+    realTime: parseBoolean(process.env.NEXT_PUBLIC_ENABLE_REAL_TIME, true),
+    offlineMode: parseBoolean(process.env.NEXT_PUBLIC_ENABLE_OFFLINE_MODE, false),
+    serviceWorker: parseBoolean(process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER, false),
   },
   debug: {
-    enabled: parseBoolean(import.meta.env.VITE_DEBUG_MODE, false),
-    mockApi: parseBoolean(import.meta.env.VITE_MOCK_API, false),
+    enabled: parseBoolean(process.env.NEXT_PUBLIC_DEBUG_MODE, false),
+    mockApi: parseBoolean(process.env.NEXT_PUBLIC_MOCK_API, false),
   },
   localization: {
-    defaultLanguage: import.meta.env.VITE_DEFAULT_LANGUAGE || 'da',
-    supportedLanguages: parseArray(import.meta.env.VITE_SUPPORTED_LANGUAGES, ['da', 'en']),
+    defaultLanguage: process.env.NEXT_PUBLIC_DEFAULT_LANGUAGE || 'da',
+    supportedLanguages: parseArray(process.env.NEXT_PUBLIC_SUPPORTED_LANGUAGES, ['da', 'en']),
   },
   upload: {
-    maxFileSize: parseNumber(import.meta.env.VITE_MAX_FILE_SIZE, 5 * 1024 * 1024), // 5MB default
-    allowedFileTypes: parseArray(import.meta.env.VITE_ALLOWED_FILE_TYPES, [
+    maxFileSize: parseNumber(process.env.NEXT_PUBLIC_MAX_FILE_SIZE, 5 * 1024 * 1024), // 5MB default
+    allowedFileTypes: parseArray(process.env.NEXT_PUBLIC_ALLOWED_FILE_TYPES, [
       'image/jpeg',
       'image/png',
       'image/webp'
     ]),
   },
   security: {
-    sessionTimeout: parseNumber(import.meta.env.VITE_SESSION_TIMEOUT, 60 * 60 * 1000), // 1 hour default
+    sessionTimeout: parseNumber(process.env.NEXT_PUBLIC_SESSION_TIMEOUT, 60 * 60 * 1000), // 1 hour default
   },
   cache: {
-    duration: parseNumber(import.meta.env.VITE_CACHE_DURATION, 5 * 60 * 1000), // 5 minutes default
+    duration: parseNumber(process.env.NEXT_PUBLIC_CACHE_DURATION, 5 * 60 * 1000), // 5 minutes default
   },
   external: {
-    googleAnalyticsId: import.meta.env.VITE_GOOGLE_ANALYTICS_ID,
-    sentryDsn: import.meta.env.VITE_SENTRY_DSN,
-    stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+    googleAnalyticsId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID,
+    sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    stripePublishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
 };
 
@@ -126,15 +126,15 @@ export const validateConfig = (): { isValid: boolean; errors: string[] } => {
 
   // Required environment variables
   if (!config.api.baseUrl) {
-    errors.push('VITE_API_URL is required');
+    errors.push('NEXT_PUBLIC_API_URL is required');
   }
 
   if (!config.api.wsUrl) {
-    errors.push('VITE_WS_URL is required');
+    errors.push('NEXT_PUBLIC_WS_URL is required');
   }
 
   if (!config.app.name) {
-    errors.push('VITE_APP_NAME is required');
+    errors.push('NEXT_PUBLIC_APP_NAME is required');
   }
 
   // Validate supported languages
