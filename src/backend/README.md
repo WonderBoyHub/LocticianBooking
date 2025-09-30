@@ -68,6 +68,7 @@ src/backend/
 - Python 3.8+
 - PostgreSQL 12+
 - Redis 6+ (optional, for advanced caching)
+- Upstash Redis account (optional, for managed serverless caching)
 
 ### 1. Environment Setup
 
@@ -142,6 +143,11 @@ The application uses environment variables for configuration. See `.env.example`
 - `RATE_LIMIT_PER_MINUTE`: API rate limiting (default: 60)
 - `CORS_ORIGINS`: Allowed CORS origins
 - `JWT_JWKS_URL` / `JWT_ALLOWED_ALGORITHMS` / `JWT_AUDIENCE` / `JWT_ISSUER`: Optional Neon RLS JWKS configuration
+
+#### Caching
+- `REDIS_URL`: Traditional Redis connection string for local caching.
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`: Upstash Redis REST credentials used for managed caching when provided.
+- `UPSTASH_REDIS_REST_READONLY_TOKEN`: Optional read-only Upstash token for safer GET-only operations.
 
 #### Feature Flags
 - `ENABLE_GDPR_FEATURES`: Enable GDPR compliance endpoints
