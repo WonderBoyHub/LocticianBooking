@@ -29,8 +29,8 @@ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { TermsPage } from './pages/legal/TermsPage';
 import { ServicesCatalogPage } from './pages/customer/ServicesCatalogPage';
 
-// Customer pages - lazy load
-const BookingPage = lazy(() => import('./pages/customer/BookingPage').then(m => ({ default: m.BookingPage })));
+// Customer pages - load immediately to avoid lazy loading issues
+import { BookingPage } from './pages/customer/BookingPage';
 const ServiceDetailsPage = lazy(() => import('./pages/customer/ServiceDetailsPage').then(m => ({ default: m.ServiceDetailsPage })));
 
 // Loctician pages - lazy load (these are likely the heaviest pages)
