@@ -17,7 +17,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
-import { useGetInstagramPostsQuery, useGetFeaturedMediaQuery } from '../../store/api';
+import { useGetHomepageContentQuery } from '../../store/api';
 import type { InstagramPost, MediaAsset } from '../../types';
 import { mapInstagramPostDto } from '../../utils/instagram';
 
@@ -101,34 +101,37 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
-    data: instagramResponse,
-    isLoading: instagramLoading,
-    isError: instagramError
-  } = useGetInstagramPostsQuery({ limit: 9 });
-  const {
-    data: mediaResponse,
-    isLoading: mediaLoading,
-    isError: mediaError
-  } = useGetFeaturedMediaQuery(6);
+    data: homepageContent,
+    isLoading: homepageLoading,
+    isError: homepageError
+  } = useGetHomepageContentQuery();
+
+  const instagramLimit = React.useMemo(
+    () => homepageContent?.settings.instagramMaxItems ?? 9,
+    [homepageContent?.settings.instagramMaxItems]
+  );
 
   const instagramPosts = React.useMemo<InstagramPost[]>(() => {
-    if (!instagramResponse?.data) {
+    if (!homepageContent?.instagram) {
       return [];
     }
 
-    return instagramResponse.data.map(mapInstagramPostDto).slice(0, 9);
-  }, [instagramResponse]);
+    return homepageContent.instagram.map(mapInstagramPostDto).slice(0, instagramLimit);
+  }, [homepageContent?.instagram, instagramLimit]);
   const instagramPlaceholders = React.useMemo(
     () =>
-      Array.from({ length: 9 }).map((_, index) => ({
+      Array.from({ length: instagramLimit || 9 }).map((_, index) => ({
         id: `placeholder-${index}`,
         image: `https://picsum.photos/400/400?random=${index + 31}`,
         caption: 'Instagram inspiration fra Lorem Picsum',
       })),
-    []
+    [instagramLimit]
   );
 
-  const mediaItems = React.useMemo<MediaAsset[]>(() => mediaResponse ?? [], [mediaResponse]);
+  const mediaItems = React.useMemo<MediaAsset[]>(
+    () => homepageContent?.media ?? [],
+    [homepageContent?.media]
+  );
 
   const testimonials = [
     {
@@ -199,16 +202,16 @@ export const LandingPage: React.FC = () => {
               </h1>
 
               <div className="mb-6">
-                {instagramLoading ? (
+                {homepageLoading ? (
                   <div className="grid grid-cols-3 gap-2">
-                    {Array.from({ length: 9 }).map((_, index) => (
+                    {Array.from({ length: instagramLimit || 9 }).map((_, index) => (
                       <div
                         key={index}
                         className="aspect-square rounded-md bg-white/60 animate-pulse"
                       />
                     ))}
                   </div>
-                ) : instagramError ? (
+                ) : homepageError ? (
                   <div className="rounded-md border border-dashed border-brand-primary/40 bg-white/60 p-4 text-sm text-brand-dark/80">
                     Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
                   </div>
@@ -479,16 +482,16 @@ export const LandingPage: React.FC = () => {
             </Button>
           </motion.div>
 
-          {instagramLoading ? (
+          {homepageLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: Math.min(instagramLimit || 6, 9) }).map((_, index) => (
                 <div
                   key={index}
                   className="aspect-square rounded-xl bg-brand-accent/50 animate-pulse"
                 />
               ))}
             </div>
-          ) : instagramError ? (
+          ) : homepageError ? (
             <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
               Kunne ikke hente Instagram-indhold i øjeblikket. Prøv igen senere.
             </div>
@@ -572,7 +575,7 @@ export const LandingPage: React.FC = () => {
             </p>
           </motion.div>
 
-          {mediaLoading ? (
+          {homepageLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
@@ -581,7 +584,7 @@ export const LandingPage: React.FC = () => {
                 />
               ))}
             </div>
-          ) : mediaError ? (
+          ) : homepageError ? (
             <div className="rounded-xl border border-dashed border-brand-primary/40 bg-brand-accent/40 p-6 text-brand-dark">
               {t('landing.media.error')}
             </div>

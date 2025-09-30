@@ -5,7 +5,8 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from app.models.enums import PageType
-from app.schemas.media import MediaFilePublic
+from app.schemas.instagram import InstagramPostAdmin, InstagramPostPublic
+from app.schemas.media import MediaFileAdmin, MediaFilePublic
 
 
 class CMSPageBase(BaseModel):
@@ -90,3 +91,63 @@ class CMSPageDetail(BaseModel):
     """Wrapper for page detail responses."""
 
     data: CMSPagePublic
+
+
+class CMSContentSettings(BaseModel):
+    """Settings controlling homepage CMS content."""
+
+    instagram_max_items: int = Field(default=9, ge=0, le=50)
+    instagram_featured_only: bool = True
+    instagram_allow_videos: bool = True
+    instagram_allow_carousels: bool = True
+    media_max_items: int = Field(default=12, ge=0, le=50)
+    media_featured_only: bool = True
+    media_include_images: bool = True
+    media_include_videos: bool = True
+
+
+class CMSContentSettingsUpdate(BaseModel):
+    """Partial update payload for content settings."""
+
+    instagram_max_items: Optional[int] = Field(default=None, ge=0, le=50)
+    instagram_featured_only: Optional[bool] = None
+    instagram_allow_videos: Optional[bool] = None
+    instagram_allow_carousels: Optional[bool] = None
+    media_max_items: Optional[int] = Field(default=None, ge=0, le=50)
+    media_featured_only: Optional[bool] = None
+    media_include_images: Optional[bool] = None
+    media_include_videos: Optional[bool] = None
+
+
+class CMSContentSettingsResponse(BaseModel):
+    """Response wrapper for settings endpoints."""
+
+    data: CMSContentSettings
+
+
+class CMSContentOverview(BaseModel):
+    """Admin facing overview of homepage content."""
+
+    settings: CMSContentSettings
+    instagram: List[InstagramPostAdmin]
+    media: List[MediaFileAdmin]
+
+
+class CMSContentOverviewResponse(BaseModel):
+    """Wrapper for admin content overview responses."""
+
+    data: CMSContentOverview
+
+
+class CMSContentOverviewPublic(BaseModel):
+    """Public facing overview of homepage content."""
+
+    settings: CMSContentSettings
+    instagram: List[InstagramPostPublic]
+    media: List[MediaFilePublic]
+
+
+class CMSContentOverviewPublicResponse(BaseModel):
+    """Wrapper for public content overview responses."""
+
+    data: CMSContentOverviewPublic

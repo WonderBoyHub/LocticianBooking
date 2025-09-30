@@ -15,6 +15,10 @@ import type {
   RegisterApiResponse,
   InstagramPostDto,
   InstagramPostUpdatePayload,
+  CmsContentOverviewAdminDto,
+  CmsContentOverviewDto,
+  CmsContentSettings,
+  CmsContentSettingsUpdatePayload,
   CmsPage,
   CmsPageSummary,
   MediaAsset,
@@ -159,6 +163,99 @@ const mapCmsPage = (item: any): CmsPage => ({
   heroMedia: item.hero_media ? mapMediaAsset(item.hero_media) : null,
 });
 
+const coerceBoolean = (value: any, fallback: boolean): boolean => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+  if (typeof value === 'string') {
+    return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+  }
+  return Boolean(value);
+};
+
+const coerceNumber = (value: any, fallback: number, min = 0, max = 100): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const mapContentSettings = (item: any): CmsContentSettings => ({
+  instagramMaxItems: coerceNumber(
+    item?.instagram_max_items ?? item?.instagramMaxItems,
+    9,
+    0,
+    50
+  ),
+  instagramFeaturedOnly: coerceBoolean(
+    item?.instagram_featured_only ?? item?.instagramFeaturedOnly,
+    true
+  ),
+  instagramAllowVideos: coerceBoolean(
+    item?.instagram_allow_videos ?? item?.instagramAllowVideos,
+    true
+  ),
+  instagramAllowCarousels: coerceBoolean(
+    item?.instagram_allow_carousels ?? item?.instagramAllowCarousels,
+    true
+  ),
+  mediaMaxItems: coerceNumber(
+    item?.media_max_items ?? item?.mediaMaxItems,
+    12,
+    0,
+    50
+  ),
+  mediaFeaturedOnly: coerceBoolean(
+    item?.media_featured_only ?? item?.mediaFeaturedOnly,
+    true
+  ),
+  mediaIncludeImages: coerceBoolean(
+    item?.media_include_images ?? item?.mediaIncludeImages,
+    true
+  ),
+  mediaIncludeVideos: coerceBoolean(
+    item?.media_include_videos ?? item?.mediaIncludeVideos,
+    true
+  ),
+});
+
+const serializeContentSettingsPayload = (
+  payload: CmsContentSettingsUpdatePayload
+): Record<string, unknown> => {
+  const body: Record<string, unknown> = {};
+
+  if (payload.instagramMaxItems !== undefined) {
+    body.instagram_max_items = payload.instagramMaxItems;
+  }
+  if (payload.instagramFeaturedOnly !== undefined) {
+    body.instagram_featured_only = payload.instagramFeaturedOnly;
+  }
+  if (payload.instagramAllowVideos !== undefined) {
+    body.instagram_allow_videos = payload.instagramAllowVideos;
+  }
+  if (payload.instagramAllowCarousels !== undefined) {
+    body.instagram_allow_carousels = payload.instagramAllowCarousels;
+  }
+  if (payload.mediaMaxItems !== undefined) {
+    body.media_max_items = payload.mediaMaxItems;
+  }
+  if (payload.mediaFeaturedOnly !== undefined) {
+    body.media_featured_only = payload.mediaFeaturedOnly;
+  }
+  if (payload.mediaIncludeImages !== undefined) {
+    body.media_include_images = payload.mediaIncludeImages;
+  }
+  if (payload.mediaIncludeVideos !== undefined) {
+    body.media_include_videos = payload.mediaIncludeVideos;
+  }
+
+  return body;
+};
+
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
@@ -186,6 +283,7 @@ export const api = createApi({
     'InstagramPost',
     'CmsPage',
     'Media',
+    'CmsContentSettings',
   ],
   endpoints: (builder) => ({
     // Authentication endpoints
@@ -522,6 +620,44 @@ export const api = createApi({
       providesTags: (result, error, slug) => [{ type: 'CmsPage', id: slug }],
     }),
 
+    getCmsContentSettings: builder.query<CmsContentSettings, void>({
+      query: () => '/cms/content/settings',
+      transformResponse: (response: { data: any }) => mapContentSettings(response.data),
+      providesTags: ['CmsContentSettings'],
+    }),
+
+    updateCmsContentSettings: builder.mutation<
+      CmsContentSettings,
+      CmsContentSettingsUpdatePayload
+    >({
+      query: (payload) => ({
+        url: '/cms/content/settings',
+        method: 'PUT',
+        body: serializeContentSettingsPayload(payload),
+      }),
+      invalidatesTags: ['CmsContentSettings', 'InstagramPost', 'Media'],
+    }),
+
+    getCmsContentOverview: builder.query<CmsContentOverviewAdminDto, void>({
+      query: () => '/cms/content/overview',
+      transformResponse: (response: { data: any }) => ({
+        settings: mapContentSettings(response.data?.settings ?? {}),
+        instagram: response.data?.instagram ?? [],
+        media: response.data?.media?.map(mapMediaAssetAdmin) ?? [],
+      }),
+      providesTags: ['CmsContentSettings', 'InstagramPost', 'Media'],
+    }),
+
+    getHomepageContent: builder.query<CmsContentOverviewDto, void>({
+      query: () => '/cms/content/homepage',
+      transformResponse: (response: { data: any }) => ({
+        settings: mapContentSettings(response.data?.settings ?? {}),
+        instagram: response.data?.instagram ?? [],
+        media: response.data?.media?.map(mapMediaAsset) ?? [],
+      }),
+      providesTags: ['InstagramPost', 'Media'],
+    }),
+
     // Media library endpoints
     getFeaturedMedia: builder.query<MediaAsset[], number | void>({
       query: (limit) => ({
@@ -620,9 +756,7 @@ export const api = createApi({
     >({
       query: (params) => ({
         url: '/instagram/posts',
-        params: {
-          limit: params?.limit ?? 9,
-        },
+        params: params?.limit !== undefined ? { limit: params.limit } : undefined,
       }),
       providesTags: ['InstagramPost'],
     }),
@@ -697,6 +831,10 @@ export const {
   useUploadFileMutation,
   useGetCmsPagesQuery,
   useGetCmsPageQuery,
+  useGetCmsContentSettingsQuery,
+  useUpdateCmsContentSettingsMutation,
+  useGetCmsContentOverviewQuery,
+  useGetHomepageContentQuery,
   useGetFeaturedMediaQuery,
   useGetMediaLibraryQuery,
   useUploadMediaAssetMutation,

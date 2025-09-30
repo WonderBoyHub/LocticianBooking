@@ -228,6 +228,31 @@ export interface InstagramPostUpdatePayload {
   displayOrder?: number;
 }
 
+export interface CmsContentSettings {
+  instagramMaxItems: number;
+  instagramFeaturedOnly: boolean;
+  instagramAllowVideos: boolean;
+  instagramAllowCarousels: boolean;
+  mediaMaxItems: number;
+  mediaFeaturedOnly: boolean;
+  mediaIncludeImages: boolean;
+  mediaIncludeVideos: boolean;
+}
+
+export type CmsContentSettingsUpdatePayload = Partial<CmsContentSettings>;
+
+export interface CmsContentOverviewDto {
+  settings: CmsContentSettings;
+  instagram: InstagramPostDto[];
+  media: MediaAsset[];
+}
+
+export interface CmsContentOverviewAdminDto {
+  settings: CmsContentSettings;
+  instagram: InstagramPostDto[];
+  media: MediaAssetAdmin[];
+}
+
 // Analytics types
 export interface AnalyticsData {
   appointments: {
