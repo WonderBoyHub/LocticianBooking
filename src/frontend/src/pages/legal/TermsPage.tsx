@@ -6,8 +6,12 @@ import { Shield, FileText, RefreshCw } from 'lucide-react';
 import { useGetCmsPageQuery } from '../../store/api';
 import type { CmsPage } from '../../types';
 
-const renderContent = (page: CmsPage | undefined | null, fallbackSections: { title: string; content: string }[]) => {
-  if (!page?.content) {
+const renderContent = (
+  page: CmsPage | undefined | null,
+  fallbackSections: { title: string; content: string }[],
+  forceFallback = false
+) => {
+  if (forceFallback || !page?.content) {
     return (
       <div className="space-y-8">
         {fallbackSections.map((section) => (
@@ -34,6 +38,7 @@ export const TermsPage: React.FC = () => {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useGetCmsPageQuery('terms-of-service');
   const page = data;
+  const heroImage = page?.heroMedia?.url ?? 'https://picsum.photos/1200/600?blur=3';
   const fallbackSections = React.useMemo(
     () => [
       {
@@ -51,6 +56,8 @@ export const TermsPage: React.FC = () => {
     ],
     [t]
   );
+
+  const showFallbackContent = !page?.content || isError;
 
   return (
     <div className="bg-brand-light py-16">
@@ -92,17 +99,28 @@ export const TermsPage: React.FC = () => {
                 ) : null}
               </div>
             </div>
+            <div className="mt-6 rounded-2xl overflow-hidden shadow-inner">
+              <img
+                src={heroImage}
+                alt={page?.title ?? t('legal.terms.title')}
+                className="w-full h-56 object-cover"
+                loading="lazy"
+              />
+            </div>
           </div>
 
           <div className="p-8">
             {isLoading ? (
               <p className="text-gray-600">{t('common.loading')}</p>
-            ) : isError ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-                {t('legal.terms.error')}
-              </div>
             ) : (
-              renderContent(page, fallbackSections)
+              <div className="space-y-6">
+                {isError ? (
+                  <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
+                    {t('legal.terms.error')}
+                  </div>
+                ) : null}
+                {renderContent(page, fallbackSections, showFallbackContent)}
+              </div>
             )}
           </div>
         </motion.div>

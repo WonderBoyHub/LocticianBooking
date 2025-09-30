@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class SubscriptionPlanBase(BaseModel):
@@ -79,9 +79,10 @@ class UserSubscriptionBase(BaseModel):
     plan_price: Decimal = Field(..., ge=0)
     discount_applied: Decimal = Field(0, ge=0, le=100)
 
-    @validator('current_period_end')
-    def validate_period_end(cls, v, values):
-        if 'current_period_start' in values and v <= values['current_period_start']:
+    @field_validator('current_period_end')
+    def validate_period_end(cls, v: datetime, info: ValidationInfo) -> datetime:
+        start = info.data.get('current_period_start') if info.data else None
+        if start and v <= start:
             raise ValueError('current_period_end must be after current_period_start')
         return v
 
@@ -138,10 +139,14 @@ class SubscriptionUsageInfo(BaseModel):
     usage_percentage: Optional[float] = None
     can_book: bool = True
 
-    @validator('usage_percentage', pre=True)
-    def calculate_usage_percentage(cls, v, values):
-        if 'max_bookings' in values and values['max_bookings'] and values['max_bookings'] > 0:
-            return (values.get('bookings_used', 0) / values['max_bookings']) * 100
+    @field_validator('usage_percentage', mode='before')
+    def calculate_usage_percentage(cls, v, info: ValidationInfo):
+        if v is not None:
+            return v
+        max_bookings = info.data.get('max_bookings') if info.data else None
+        if max_bookings and max_bookings > 0:
+            bookings_used = info.data.get('bookings_used', 0)
+            return (bookings_used / max_bookings) * 100
         return None
 
 

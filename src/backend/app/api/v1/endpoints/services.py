@@ -257,7 +257,7 @@ async def delete_service_category(
 
 
 # Service Endpoints
-@router.get("/", response_model=List[ServiceSummary])
+@router.get("/", response_model=List[ServiceSchema])
 async def list_services(
     category_id: Optional[str] = Query(None, description="Filter by category"),
     include_inactive: bool = Query(False, description="Include inactive services"),
@@ -265,12 +265,12 @@ async def list_services(
     limit: int = Query(100, le=1000, description="Limit results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
-) -> List[ServiceSummary]:
+) -> List[ServiceSchema]:
     """List services with filtering options."""
     try:
         query = (
-            select(Service, ServiceCategory.name.label('category_name'))
-            .outerjoin(ServiceCategory, Service.category_id == ServiceCategory.id)
+            select(Service)
+            .options(selectinload(Service.category))
             .order_by(Service.display_order, Service.name)
         )
 
@@ -289,13 +289,10 @@ async def list_services(
         query = query.limit(limit).offset(offset)
 
         result = await db.execute(query)
-        services = result.all()
+        services = result.scalars().unique().all()
 
         return [
-            ServiceSummary(
-                **service.Service.__dict__,
-                category_name=service.category_name
-            )
+            ServiceSchema.model_validate(service, from_attributes=True)
             for service in services
         ]
 
@@ -624,18 +621,18 @@ async def search_services(
         )
 
 
-@router.post("/filter", response_model=List[ServiceSummary])
+@router.post("/filter", response_model=List[ServiceSchema])
 async def filter_services(
     filters: ServiceFilter,
     limit: int = Query(100, le=1000, description="Limit results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
-) -> List[ServiceSummary]:
+) -> List[ServiceSchema]:
     """Filter services with advanced options."""
     try:
         query = (
-            select(Service, ServiceCategory.name.label('category_name'))
-            .outerjoin(ServiceCategory, Service.category_id == ServiceCategory.id)
+            select(Service)
+            .options(selectinload(Service.category))
         )
 
         # Build filters
@@ -666,13 +663,10 @@ async def filter_services(
         query = query.order_by(Service.display_order, Service.name).limit(limit).offset(offset)
 
         result = await db.execute(query)
-        services = result.all()
+        services = result.scalars().unique().all()
 
         return [
-            ServiceSummary(
-                **service.Service.__dict__,
-                category_name=service.category_name
-            )
+            ServiceSchema.model_validate(service, from_attributes=True)
             for service in services
         ]
 

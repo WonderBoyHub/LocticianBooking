@@ -186,8 +186,8 @@ export const DateTimeSelectionStep: React.FC<DateTimeSelectionStepProps> = ({
                       ? 'bg-brand-accent text-brand-primary font-semibold hover:bg-brand-secondary'
                       : 'bg-gray-50 text-gray-700 hover:bg-brand-accent hover:text-brand-primary'
                   }`}
-                  whileHover={!isDateDisabled(schedule.date) ? { scale: 1.05 } : {}}
-                  whileTap={!isDateDisabled(schedule.date) ? { scale: 0.95 } : {}}
+                  whilehover={!isDateDisabled(schedule.date) ? { scale: 1.05 } : {}}
+                  whiletap={!isDateDisabled(schedule.date) ? { scale: 0.95 } : {}}
                 >
                   <div className="text-lg font-semibold">
                     {format(schedule.date, 'd')}
@@ -245,8 +245,8 @@ export const DateTimeSelectionStep: React.FC<DateTimeSelectionStepProps> = ({
                         ? 'bg-brand-primary text-white shadow-md'
                         : 'bg-gray-50 text-gray-700 hover:bg-brand-accent hover:text-brand-primary'
                     }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whilehover={{ scale: 1.05 }}
+                    whiletap={{ scale: 0.95 }}
                   >
                     {formatTimeSlot(slot.time)}
                   </motion.button>

@@ -60,7 +60,7 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, onEdit, onDelete, onView }) => {
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whilehover={{ y: -2 }}
       className="bg-white rounded-xl shadow-soft border border-brown-200 overflow-hidden"
     >
       {/* Service Image */}

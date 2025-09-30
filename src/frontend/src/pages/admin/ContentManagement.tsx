@@ -290,7 +290,7 @@ export const ContentManagement: React.FC = () => {
           return (
             <motion.div
               key={post.id}
-              whileHover={{ y: -4, boxShadow: '0 18px 30px -15px rgba(107,78,50,0.3)' }}
+              whilehover={{ y: -4, boxShadow: '0 18px 30px -15px rgba(107,78,50,0.3)' }}
               className="bg-white rounded-2xl overflow-hidden shadow-soft border border-brown-100 flex flex-col"
             >
               <a

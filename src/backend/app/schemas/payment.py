@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class PaymentTransactionBase(BaseModel):
@@ -21,8 +21,8 @@ class PaymentTransactionBase(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     failure_reason: Optional[str] = None
 
-    @validator('currency')
-    def validate_currency(cls, v):
+    @field_validator('currency')
+    def validate_currency(cls, v: str) -> str:
         if len(v) != 3:
             raise ValueError('Currency must be exactly 3 characters')
         return v.upper()
@@ -70,8 +70,8 @@ class MollyPaymentIntent(BaseModel):
     description: Optional[str] = None
     customer_id: Optional[str] = None
 
-    @validator('currency')
-    def validate_currency(cls, v):
+    @field_validator('currency')
+    def validate_currency(cls, v: str) -> str:
         return v.upper()
 
 

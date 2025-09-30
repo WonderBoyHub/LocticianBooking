@@ -8,7 +8,7 @@ from typing import List, Optional
 import structlog
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import and_, func, or_, select, text, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -53,8 +53,8 @@ class UserUpdateAdmin(UserUpdate):
     last_login_at: Optional[datetime] = None
     data_retention_until: Optional[datetime] = None
 
-    @validator("password")
-    def validate_password(cls, v):
+    @field_validator("password")
+    def validate_password(cls, v: Optional[str]):
         if v is None:
             return v
         if len(v) < 8:
@@ -110,7 +110,7 @@ class RoleChangeRequest(BaseModel):
 
 class BulkUserAction(BaseModel):
     """Bulk user action."""
-    user_ids: List[str] = Field(..., min_items=1, max_items=100)
+    user_ids: List[str] = Field(..., min_length=1, max_length=100)
     action: str  # 'activate', 'deactivate', 'verify_email', 'delete'
     reason: Optional[str] = None
 

@@ -14,6 +14,7 @@ from . import (
     instagram,
     cms,
     media,
+    services,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "instagram",
     "cms",
     "media",
+    "services",
 ]

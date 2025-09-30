@@ -4,7 +4,7 @@ User schemas.
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.models.enums import UserRole, UserStatus
 
@@ -33,8 +33,8 @@ class UserCreate(UserBase):
     role: UserRole = Field(default=UserRole.CUSTOMER, description="User role")
     gdpr_consent: bool = Field(..., description="GDPR consent required")
 
-    @validator("password")
-    def validate_password(cls, v):
+    @field_validator("password")
+    def validate_password(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         if not any(c.isupper() for c in v):

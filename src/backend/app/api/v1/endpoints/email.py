@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -85,12 +85,15 @@ class EmailQueueCreate(BaseModel):
     booking_id: Optional[str] = None
     scheduled_at: Optional[datetime] = None
 
-    @validator('html_content', 'text_content')
-    def validate_content(cls, v, values):
+    @model_validator(mode="after")
+    def validate_content(cls, values: "EmailQueueCreate") -> "EmailQueueCreate":
         """Validate that at least one content type is provided if no template."""
-        if not values.get('template_type') and not v and not values.get('html_content') and not values.get('text_content'):
+        if (
+            values.template_type is None
+            and not (values.html_content or values.text_content)
+        ):
             raise ValueError('Either template_type or content must be provided')
-        return v
+        return values
 
     class Config:
         use_enum_values = True

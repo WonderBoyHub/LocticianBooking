@@ -3,7 +3,7 @@ Availability pattern and override schemas.
 """
 from datetime import date as DateType, time, datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from app.models.enums import CalendarEventType
 
@@ -18,15 +18,17 @@ class AvailabilityPatternBase(BaseModel):
     effective_until: Optional[DateType] = Field(None, description="Effective until date")
     is_active: bool = Field(default=True, description="Is pattern active")
 
-    @validator('end_time')
-    def validate_end_time(cls, v, values):
-        if 'start_time' in values and v <= values['start_time']:
+    @field_validator('end_time')
+    def validate_end_time(cls, v: time, info: ValidationInfo) -> time:
+        start_time = info.data.get('start_time') if info.data else None
+        if start_time and v <= start_time:
             raise ValueError('End time must be after start time')
         return v
 
-    @validator('effective_until')
-    def validate_effective_until(cls, v, values):
-        if v and 'effective_from' in values and v <= values['effective_from']:
+    @field_validator('effective_until')
+    def validate_effective_until(cls, v: Optional[DateType], info: ValidationInfo) -> Optional[DateType]:
+        effective_from = info.data.get('effective_from') if info.data else None
+        if v and effective_from and v <= effective_from:
             raise ValueError('Effective until must be after effective from')
         return v
 
@@ -45,9 +47,10 @@ class AvailabilityPatternUpdate(BaseModel):
     effective_until: Optional[DateType] = None
     is_active: Optional[bool] = None
 
-    @validator('end_time')
-    def validate_end_time(cls, v, values):
-        if v and 'start_time' in values and values['start_time'] and v <= values['start_time']:
+    @field_validator('end_time')
+    def validate_end_time(cls, v: Optional[time], info: ValidationInfo) -> Optional[time]:
+        start_time = info.data.get('start_time') if info.data else None
+        if v and start_time and v <= start_time:
             raise ValueError('End time must be after start time')
         return v
 
@@ -78,15 +81,16 @@ class AvailabilityOverrideBase(BaseModel):
     is_available: bool = Field(default=True, description="Is available on this date")
     reason: Optional[str] = Field(None, max_length=200, description="Reason for override")
 
-    @validator('end_time')
-    def validate_end_time(cls, v, values):
-        if v and 'start_time' in values and values['start_time'] and v <= values['start_time']:
+    @field_validator('end_time')
+    def validate_end_time(cls, v: Optional[time], info: ValidationInfo) -> Optional[time]:
+        start_time = info.data.get('start_time') if info.data else None
+        if v and start_time and v <= start_time:
             raise ValueError('End time must be after start time')
         return v
 
-    @validator('start_time')
-    def validate_availability_times(cls, v, values):
-        is_available = values.get('is_available', True)
+    @field_validator('start_time')
+    def validate_availability_times(cls, v: Optional[time], info: ValidationInfo) -> Optional[time]:
+        is_available = info.data.get('is_available', True) if info.data else True
         if is_available and not v:
             raise ValueError('Start time required when is_available is True')
         return v
@@ -104,9 +108,10 @@ class AvailabilityOverrideUpdate(BaseModel):
     is_available: Optional[bool] = None
     reason: Optional[str] = Field(None, max_length=200)
 
-    @validator('end_time')
-    def validate_end_time(cls, v, values):
-        if v and 'start_time' in values and values['start_time'] and v <= values['start_time']:
+    @field_validator('end_time')
+    def validate_end_time(cls, v: Optional[time], info: ValidationInfo) -> Optional[time]:
+        start_time = info.data.get('start_time') if info.data else None
+        if v and start_time and v <= start_time:
             raise ValueError('End time must be after start time')
         return v
 
@@ -141,15 +146,17 @@ class CalendarEventBase(BaseModel):
     recurrence_rule: Optional[str] = Field(None, description="RRULE format recurrence")
     is_public: bool = Field(default=False, description="Is publicly visible")
 
-    @validator('end_datetime')
-    def validate_end_datetime(cls, v, values):
-        if 'start_datetime' in values and v <= values['start_datetime']:
+    @field_validator('end_datetime')
+    def validate_end_datetime(cls, v: datetime, info: ValidationInfo) -> datetime:
+        start_datetime = info.data.get('start_datetime') if info.data else None
+        if start_datetime and v <= start_datetime:
             raise ValueError('End datetime must be after start datetime')
         return v
 
-    @validator('recurrence_rule')
-    def validate_recurrence_rule(cls, v, values):
-        if values.get('is_recurring') and not v:
+    @field_validator('recurrence_rule')
+    def validate_recurrence_rule(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        is_recurring = info.data.get('is_recurring') if info.data else None
+        if is_recurring and not v:
             raise ValueError('Recurrence rule required for recurring events')
         return v
 
@@ -170,9 +177,10 @@ class CalendarEventUpdate(BaseModel):
     recurrence_rule: Optional[str] = None
     is_public: Optional[bool] = None
 
-    @validator('end_datetime')
-    def validate_end_datetime(cls, v, values):
-        if v and 'start_datetime' in values and values['start_datetime'] and v <= values['start_datetime']:
+    @field_validator('end_datetime')
+    def validate_end_datetime(cls, v: Optional[datetime], info: ValidationInfo) -> Optional[datetime]:
+        start_datetime = info.data.get('start_datetime') if info.data else None
+        if v and start_datetime and v <= start_datetime:
             raise ValueError('End datetime must be after start datetime')
         return v
 
@@ -246,14 +254,15 @@ class AvailabilityRequest(BaseModel):
     buffer_minutes: int = Field(default=15, ge=0, description="Buffer time in minutes")
     slot_interval_minutes: int = Field(default=30, ge=15, description="Time slot intervals")
 
-    @validator('end_date')
-    def validate_end_date(cls, v, values):
-        if 'start_date' in values and v < values['start_date']:
+    @field_validator('end_date')
+    def validate_end_date(cls, v: DateType, info: ValidationInfo) -> DateType:
+        start_date = info.data.get('start_date') if info.data else None
+        if start_date and v < start_date:
             raise ValueError('End date must be after or equal to start date')
         return v
 
-    @validator('start_date')
-    def validate_start_date(cls, v):
+    @field_validator('start_date')
+    def validate_start_date(cls, v: DateType) -> DateType:
         if v < DateType.today():
             raise ValueError('Start date cannot be in the past')
         return v
@@ -263,13 +272,13 @@ class AvailabilityRequest(BaseModel):
 class BulkAvailabilityPatternCreate(BaseModel):
     """Bulk create availability patterns."""
     loctician_id: str = Field(..., description="Loctician ID")
-    patterns: List[AvailabilityPatternBase] = Field(..., min_items=1, description="Patterns to create")
+    patterns: List[AvailabilityPatternBase] = Field(..., min_length=1, description="Patterns to create")
 
 
 class BulkAvailabilityOverrideCreate(BaseModel):
     """Bulk create availability overrides."""
     loctician_id: str = Field(..., description="Loctician ID")
-    overrides: List[AvailabilityOverrideBase] = Field(..., min_items=1, description="Overrides to create")
+    overrides: List[AvailabilityOverrideBase] = Field(..., min_length=1, description="Overrides to create")
 
 
 class CalendarConflictCheck(BaseModel):
@@ -279,9 +288,10 @@ class CalendarConflictCheck(BaseModel):
     end_datetime: datetime = Field(..., description="Proposed end datetime")
     exclude_booking_id: Optional[str] = Field(None, description="Booking ID to exclude from conflict check")
 
-    @validator('end_datetime')
-    def validate_end_datetime(cls, v, values):
-        if 'start_datetime' in values and v <= values['start_datetime']:
+    @field_validator('end_datetime')
+    def validate_end_datetime(cls, v: datetime, info: ValidationInfo) -> datetime:
+        start_datetime = info.data.get('start_datetime') if info.data else None
+        if start_datetime and v <= start_datetime:
             raise ValueError('End datetime must be after start datetime')
         return v
 

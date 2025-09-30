@@ -163,7 +163,41 @@
     "media": {
       "title": "Galleri & inspiration",
       "subtitle": "Se udvalgte billeder og videoer fra de seneste behandlinger.",
+      "placeholderSubtitle": "Vi viser midlertidige inspirationbilleder fra Lorem Picsum, indtil dit galleri er klar.",
+      "placeholderNotice": "Billederne herover er eksempler fra Lorem Picsum og bliver automatisk udskiftet, når du uploader eget indhold eller forbinder din Instagram-profil.",
       "videoBadge": "Video"
+    },
+    "products": {
+      "title": "Plejende produkter & sæt",
+      "subtitle": "Supplér din behandling med håndplukkede produkter, som kan købes i salonen eller gennem vores rådgivning.",
+      "cta": "Book konsultation",
+      "hydration": {
+        "title": "Intens fugt & pleje",
+        "description": "Perfekt til dig, der ønsker bløde, velplejede locs mellem hver vedligeholdelse.",
+        "items": [
+          "Fugtgivende shampoo uden sulfater",
+          "Dybtvirkende aloe & shea leave-in",
+          "Silkeagtig olieblanding til nattepleje"
+        ]
+      },
+      "starter": {
+        "title": "Starter locs kit",
+        "description": "Støtter din loc-rejse fra dag ét med milde, plejende produkter.",
+        "items": [
+          "Beroligende hovedbundstoner",
+          "Letvægts creme til retwist",
+          "Satinhue der beskytter mens du sover"
+        ]
+      },
+      "styling": {
+        "title": "Styling & finish",
+        "description": "Giv dine locs ekstra glans og holdbarhed til særlige lejligheder.",
+        "items": [
+          "Naturlig glansspray",
+          "Lette edge-controls uden ophobning",
+          "Dekorative accessories til sæsonens looks"
+        ]
+      }
     }
   },
   "legal": {

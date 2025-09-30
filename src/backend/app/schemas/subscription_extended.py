@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 # Subscription Plan Tiers
@@ -114,11 +114,12 @@ class SubscriptionPlanCreate(BaseModel):
     is_featured: bool = False
     display_order: int = 0
 
-    @validator('price_yearly')
-    def yearly_should_be_discounted(cls, v, values):
+    @field_validator('price_yearly')
+    def yearly_should_be_discounted(cls, v: Decimal, info: ValidationInfo) -> Decimal:
         """Yearly price should typically be less than 12x monthly."""
-        if 'price_monthly' in values:
-            monthly_yearly = values['price_monthly'] * 12
+        price_monthly = info.data.get('price_monthly') if info.data else None
+        if price_monthly is not None:
+            monthly_yearly = price_monthly * 12
             if v > monthly_yearly:
                 raise ValueError('Yearly price should not exceed 12x monthly price')
         return v
