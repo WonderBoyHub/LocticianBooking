@@ -196,8 +196,8 @@ class MollieSubscriptionCreate(BaseModel):
 
         period = parts[1].lower()
         if period not in {'day', 'days', 'week', 'weeks', 'month', 'months'}:
+            valid_periods = {'day', 'days', 'week', 'weeks', 'month', 'months'}
 
-        valid_periods = {'day', 'days', 'week', 'weeks', 'month', 'months'}
         if parts[1] not in valid_periods:
             raise ValueError('Interval period must be days, weeks, or months')
         return v
